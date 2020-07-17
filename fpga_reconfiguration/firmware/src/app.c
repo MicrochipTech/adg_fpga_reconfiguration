@@ -202,17 +202,11 @@ void APP_Tasks ( void )
         case APP_LIST_FILES:
         {
             SYS_FS_FSTAT stat;
-            char longFileName[300];
 
             appData.fileHandle = SYS_FS_DirOpen("/mnt/mydrive/");
 
             if(appData.fileHandle != SYS_FS_HANDLE_INVALID)
             {
-                // If long file name is used, the following elements of the "stat"
-                // structure needs to be initialized with address of proper buffer.
-                stat.lfname = longFileName;
-                stat.lfsize = 300;
-
                 bool isDirReadEnd = false;
                 while(isDirReadEnd == false)
                 {
@@ -224,15 +218,15 @@ void APP_Tasks ( void )
                     }
                     else
                     {
-                        char *ptr = strrchr(longFileName, 0x2e); // Iso period
+                        char *ptr = strrchr(&(stat.fname[0]), 0x2e); // Iso period
                         if(ptr != NULL)
                         {
                             if (strncmp(dat_extention, ptr, 4) == 0 )
                             {
-                                ptr = &(longFileName[0]);
+                                ptr = &(stat.fname[0]);
                                 if (strncmp("PB0", ptr, 3) == 0 )
                                 {
-                                    strncpy(&(appData.datFileName[0][0]), longFileName, 300);
+                                    strncpy(&(appData.datFileName[0][0]), &(stat.fname[0]), 300);
 #ifdef ENABLE_DISPLAY
                                     dp_display_text((DPCHAR*)"BP0 : ");
                                     dp_display_text((DPCHAR*)&appData.datFileName[0][0]);
@@ -241,7 +235,7 @@ void APP_Tasks ( void )
                                 }
                                 else if (strncmp("PB1", ptr, 3) == 0 )
                                 {
-                                    strncpy(&(appData.datFileName[1][0]), longFileName, 300);
+                                    strncpy(&(appData.datFileName[1][0]), &(stat.fname[0]), 300);
 #ifdef ENABLE_DISPLAY
                                     dp_display_text((DPCHAR*)"BP1 : ");
                                     dp_display_text((DPCHAR*)&appData.datFileName[1][0]);
@@ -250,7 +244,7 @@ void APP_Tasks ( void )
                                 }
                                 else if (strncmp("PB2", ptr, 3) == 0 )
                                 {
-                                    strncpy(&(appData.datFileName[2][0]), longFileName, 300);
+                                    strncpy(&(appData.datFileName[2][0]), &(stat.fname[0]), 300);
 #ifdef ENABLE_DISPLAY
                                     dp_display_text((DPCHAR*)"BP2 : ");
                                     dp_display_text((DPCHAR*)&appData.datFileName[2][0]);
@@ -269,7 +263,7 @@ void APP_Tasks ( void )
                     }
                 }
             }
-            
+
             SYS_FS_DirClose(appData.fileHandle);
 
             appData.state = APP_WAIT_PUSH_BUTTON;

@@ -130,6 +130,7 @@ The DirectC library is build with the following options:
         * Prepare the SDCARD by copying the generated DAT files that will be used by DirectC, each filename should start with the associated button:
             * For PB0 : PB0_[...].dat
             * For PB1 : PB1_[...].dat
+        * Connect the I/O1 Xplained Pro Extension Kit on connector J25 of the SAMRH71-EK board.
 
 ---
 

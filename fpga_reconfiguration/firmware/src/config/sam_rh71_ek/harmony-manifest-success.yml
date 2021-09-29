@@ -4,19 +4,17 @@
 
 
 project: fpga_reconfiguration
-creation_date: 2020-07-17T17:38:52.519+02:00[Europe/Paris]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
+creation_date: 2021-09-29T13:43:31.600+02:00[Europe/Paris]    # ISO 8601 format: https://www.w3.org/TR/NOTE-datetime
 operating_system: Windows 10
 mhc_mode: IDE            # [IDE|Standalone|Headless]
-mplabx_version: v5.40        # if MPLAB X plugin only
-plugin_version: v3.5.0        # if MPLAB X plugin only
+mhc_version: v3.8.1
+mplabx_version: v5.50        # if MPLAB X plugin only
+plugin_version: v3.6.4        # if MPLAB X plugin only
+compiler: XC32 (3.01)
 
 modules:
-    - {name: "aerospace", version: "v3.1.0"}
-    - {name: "bsp", version: "v3.7.0"}
-    - {name: "contentmanager", version: "v1.3.1"}
-    - {name: "core", version: "v3.7.2"}
-    - {name: "csp", version: "v3.7.1"}
-    - {name: "dev_packs", version: "v3.7.0"}
-    - {name: "mhc", version: "v3.4.0"}
-    - {name: "motor_control", version: "unknown"}
+    - {name: "core", version: "v3.10.0"}
+    - {name: "csp", version: "v3.10.0"}
+    - {name: "dev_packs", version: "v3.10.0"}
+    - {name: "bsp", version: "v3.10.0"}
 

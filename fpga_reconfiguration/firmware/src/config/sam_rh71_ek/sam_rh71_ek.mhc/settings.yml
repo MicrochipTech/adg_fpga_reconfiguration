@@ -1,0 +1,13 @@
+configName: sam_rh71_ek
+folderName: ''
+format_version: v1.0
+frameworkPath: ../Tools_H3/HarmonyFramework
+processor: ATSAMRH71F20C
+projectName: ''
+settings:
+  PackageFilter: aerospace;bootloader;bootloader_apps_uart;bsp;core;core_apps_sam_rh71;crypto;crypto_apps_encrypt_decrypt;crypto_apps_large_hash;crypto_apps_speed_test;csp;csp_apps_sam_e70_s70_v70_v71;csp_apps_sam_rh71;dev_packs;net;net_apps_sam_e70_v71;quick_docs;usb
+  FORCE_OPTIMIZATION: 'false'
+  GENERATE_BACKUP: 'true'
+  CMSISPath: .\dev_packs\arm\CMSIS\5.8.0
+  MERGE_STRATEGY: USER_ALL
+  DFPPath: .\dev_packs\Microchip\SAMRH71_DFP\2.3.124\samrh71c\atdf\ATSAMRH71F20C.atdf

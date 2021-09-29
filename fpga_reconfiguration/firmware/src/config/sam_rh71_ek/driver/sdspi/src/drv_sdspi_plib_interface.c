@@ -48,7 +48,6 @@
 
 #include <string.h>
 #include "drv_sdspi_plib_interface.h"
-#include "system/cache/sys_cache.h"
 
 // *****************************************************************************
 /* Timer Event Handler
@@ -95,173 +94,6 @@ void _DRV_SDSPI_SPIPlibCallbackHandler( uintptr_t context )
 }
 
 // *****************************************************************************
-/* SDSPI RX DMA Event Handler
-
-  Summary:
-    Event handler registered by the SD card driver with the DMA System service
-    for the receive DMA channel
-
-  Description:
-    This event handler is called by the DMA System Service when a DMA transfer
-    is complete.
-
-  Remarks:
-    Block transfers always block on a semaphore in an RTOS environment. This
-    semaphore is released from this callback when DMA is used.
-
-*/
-
-void _DRV_SDSPI_RX_DMA_CallbackHandler(
-    SYS_DMA_TRANSFER_EVENT event,
-    uintptr_t context
-)
-{
-    DRV_SDSPI_OBJ* dObj = (DRV_SDSPI_OBJ *)context;
-
-    if(event == SYS_DMA_TRANSFER_COMPLETE)
-    {
-        dObj->spiTransferStatus = DRV_SDSPI_SPI_TRANSFER_STATUS_COMPLETE;
-    }
-    else
-    {
-        dObj->spiTransferStatus = DRV_SDSPI_SPI_TRANSFER_STATUS_ERROR;
-    }
-
-    /* Make sure that the last byte is shifted out before CS is de-asserted */
-    while (dObj->spiPlib->isBusy());
-    SYS_PORT_PinSet(dObj->chipSelectPin);
-}
-
-// *****************************************************************************
-/* SDSPI TX DMA Event Handler
-
-  Summary:
-    Event handler registered by the SD card driver with the DMA System service
-    for the transmit DMA channel
-
-  Description:
-
-  Remarks:
-
-*/
-
-void _DRV_SDSPI_TX_DMA_CallbackHandler(
-    SYS_DMA_TRANSFER_EVENT event,
-    uintptr_t context
-)
-{
-    /* Do nothing */
-}
-
-
-// *****************************************************************************
-/* SDSPI DMA Write
-
-  Summary:
-    Configures transmit and receive DMA channels for a write operation and starts
-    the DMA transfer.
-
-  Description:
-
-  Remarks:
-
-*/
-
-static bool _DRV_SDSPI_DMA_Write(
-    DRV_SDSPI_OBJ* dObj,
-    void* pWriteBuffer,
-    uint32_t nBytes
-)
-{
-    /* Clean cache to flush the data from the cache to the main memory */
-    SYS_CACHE_CleanDCache_by_Addr (pWriteBuffer, nBytes);
-
-    /* Setup DMA Receive channel to receive dummy data */
-    SYS_DMA_AddressingModeSetup(
-        dObj->rxDMAChannel,
-        SYS_DMA_SOURCE_ADDRESSING_MODE_FIXED,
-        SYS_DMA_DESTINATION_ADDRESSING_MODE_FIXED
-    );
-
-    SYS_DMA_ChannelTransfer(
-        dObj->rxDMAChannel,
-        (const void *)dObj->rxAddress,      /* Source Address */
-        (const void*)&dObj->rxDummyData,    /* Destination Address */
-        nBytes
-    );
-
-    /* Setup DMA Transmit channel to transmit the write buffer */
-    SYS_DMA_AddressingModeSetup(
-        dObj->txDMAChannel,
-        SYS_DMA_SOURCE_ADDRESSING_MODE_INCREMENTED,
-        SYS_DMA_DESTINATION_ADDRESSING_MODE_FIXED
-    );
-
-    SYS_DMA_ChannelTransfer(
-        dObj->txDMAChannel,
-        (const void *)pWriteBuffer,         /* Source Address */
-        (const void*)dObj->txAddress,       /* Destination Address */
-        nBytes
-    );
-
-    return true;
-}
-
-// *****************************************************************************
-/* SDSPI DMA Read
-
-  Summary:
-    Configures the transmit and receive DMA channels for a read operation and starts
-    the DMA transfer.
-
-  Description:
-
-  Remarks:
-
-*/
-
-static bool _DRV_SDSPI_DMA_Read(
-    DRV_SDSPI_OBJ* dObj,
-    void* pReadBuffer,
-    uint32_t nBytes
-)
-{
-    /* Setup the DMA Receive channel to receive data into the read buffer */
-
-    /* Invalidate cache to force CPU to read from the main memory */
-    SYS_CACHE_InvalidateDCache_by_Addr(pReadBuffer, nBytes);
-
-    SYS_DMA_AddressingModeSetup(
-        dObj->rxDMAChannel,
-        SYS_DMA_SOURCE_ADDRESSING_MODE_FIXED,
-        SYS_DMA_DESTINATION_ADDRESSING_MODE_INCREMENTED
-    );
-
-    SYS_DMA_ChannelTransfer(
-        dObj->rxDMAChannel,
-        (const void *)dObj->rxAddress,      /* Source Address */
-        (const void*)pReadBuffer,           /* Destination Address */
-        nBytes
-    );
-
-    /* Setup the DMA Transmit channel to transmit dummy data */
-
-    SYS_DMA_AddressingModeSetup(
-        dObj->txDMAChannel,
-        SYS_DMA_SOURCE_ADDRESSING_MODE_FIXED,
-        SYS_DMA_DESTINATION_ADDRESSING_MODE_FIXED
-    );
-
-    SYS_DMA_ChannelTransfer(
-        dObj->txDMAChannel,
-        (const void *)dObj->txDummyData,        /* Source Address */
-        (const void*)dObj->txAddress,           /* Destination Address */
-        nBytes
-    );
-
-    return true;
-}
-// *****************************************************************************
 /* SD Card SPI Write
 
   Summary:
@@ -285,28 +117,13 @@ bool _DRV_SDSPI_SPIWrite(
 
     dObj->spiTransferStatus = DRV_SDSPI_SPI_TRANSFER_STATUS_IN_PROGRESS;
 
-    /* If enabled, used DMA */
-    if ((dObj->txDMAChannel != SYS_DMA_CHANNEL_NONE) && (dObj->rxDMAChannel != SYS_DMA_CHANNEL_NONE ))
+    if (dObj->spiPlib->write (pWriteBuffer, nBytes) == false)
     {
-        if (_DRV_SDSPI_DMA_Write(dObj, pWriteBuffer, nBytes) == false)
-        {
-            SYS_PORT_PinSet(dObj->chipSelectPin);
-        }
-        else
-        {
-            isSuccess = true;
-        }
+        SYS_PORT_PinSet(dObj->chipSelectPin);
     }
     else
     {
-        if (dObj->spiPlib->write (pWriteBuffer, nBytes) == false)
-        {
-            SYS_PORT_PinSet(dObj->chipSelectPin);
-        }
-        else
-        {
-            isSuccess = true;
-        }
+        isSuccess = true;
     }
 
     return isSuccess;
@@ -336,28 +153,13 @@ bool _DRV_SDSPI_SPIRead(
 
     dObj->spiTransferStatus = DRV_SDSPI_SPI_TRANSFER_STATUS_IN_PROGRESS;
 
-    /* If enabled, used DMA */
-    if ((dObj->txDMAChannel != SYS_DMA_CHANNEL_NONE) && (dObj->rxDMAChannel != SYS_DMA_CHANNEL_NONE ))
+    if (dObj->spiPlib->read (pReadBuffer, nBytes) == false)
     {
-        if (_DRV_SDSPI_DMA_Read(dObj, pReadBuffer, nBytes) == false)
-        {
-            SYS_PORT_PinSet(dObj->chipSelectPin);
-        }
-        else
-        {
-            isSuccess = true;
-        }
+        SYS_PORT_PinSet(dObj->chipSelectPin);
     }
     else
     {
-        if (dObj->spiPlib->read (pReadBuffer, nBytes) == false)
-        {
-            SYS_PORT_PinSet(dObj->chipSelectPin);
-        }
-        else
-        {
-            isSuccess = true;
-        }
+        isSuccess = true;
     }
 
     return isSuccess;
@@ -375,20 +177,9 @@ bool _DRV_SDSPI_SPIWriteWithChipSelectDisabled(
 
     dObj->spiTransferStatus = DRV_SDSPI_SPI_TRANSFER_STATUS_IN_PROGRESS;
 
-    /* If enabled, used DMA */
-    if ((dObj->txDMAChannel != SYS_DMA_CHANNEL_NONE) && (dObj->rxDMAChannel != SYS_DMA_CHANNEL_NONE ))
+    if (dObj->spiPlib->write (pWriteBuffer, nBytes) == true)
     {
-        if (_DRV_SDSPI_DMA_Write(dObj, pWriteBuffer, nBytes) == true)
-        {
-            isSuccess = true;
-        }
-    }
-    else
-    {
-        if (dObj->spiPlib->write (pWriteBuffer, nBytes) == true)
-        {
-            isSuccess = true;
-        }
+        isSuccess = true;
     }
 
     return isSuccess;

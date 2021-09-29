@@ -19,14 +19,21 @@
             <itemPath>../src/config/sam_rh71_ek/driver/driver.h</itemPath>
             <itemPath>../src/config/sam_rh71_ek/driver/driver_common.h</itemPath>
           </logicalFolder>
+          <logicalFolder name="f5" displayName="osal" projectFiles="true">
+            <itemPath>../src/config/sam_rh71_ek/osal/osal.h</itemPath>
+            <itemPath>../src/config/sam_rh71_ek/osal/osal_definitions.h</itemPath>
+            <itemPath>../src/config/sam_rh71_ek/osal/osal_impl_basic.h</itemPath>
+          </logicalFolder>
           <logicalFolder name="f2" displayName="peripheral" projectFiles="true">
             <logicalFolder name="f1" displayName="clk" projectFiles="true">
               <itemPath>../src/config/sam_rh71_ek/peripheral/clk/plib_clk.h</itemPath>
             </logicalFolder>
             <logicalFolder name="f5" displayName="flexcom" projectFiles="true">
               <logicalFolder name="f1" displayName="spi" projectFiles="true">
-                <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/plib_flexcom4_spi.h</itemPath>
-                <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/plib_flexcom_spi_local.h</itemPath>
+                <logicalFolder name="f1" displayName="master" projectFiles="true">
+                  <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/master/plib_flexcom4_spi_master.h</itemPath>
+                  <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/master/plib_flexcom_spi_master_common.h</itemPath>
+                </logicalFolder>
               </logicalFolder>
               <logicalFolder name="f2" displayName="usart" projectFiles="true">
                 <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/usart/plib_flexcom1_usart.h</itemPath>
@@ -100,6 +107,9 @@
           <itemPath>../src/config/sam_rh71_ek/definitions.h</itemPath>
           <itemPath>../src/config/sam_rh71_ek/user.h</itemPath>
           <itemPath>../src/config/sam_rh71_ek/configuration.h</itemPath>
+          <itemPath>../src/config/sam_rh71_ek/interrupts.h</itemPath>
+          <itemPath>../src/config/sam_rh71_ek/device_vectors.h</itemPath>
+          <itemPath>../src/config/sam_rh71_ek/device.h</itemPath>
         </logicalFolder>
       </logicalFolder>
       <logicalFolder name="DirectC" displayName="DirectC" projectFiles="true">
@@ -127,11 +137,6 @@
         <itemPath>../src/DirectC/dpcom.h</itemPath>
         <itemPath>../src/DirectC/dpuser.h</itemPath>
         <itemPath>../src/DirectC/dputil.h</itemPath>
-      </logicalFolder>
-      <logicalFolder name="f3" displayName="osal" projectFiles="true">
-        <itemPath>../src/config/sam_rh71_ek/osal/osal.h</itemPath>
-        <itemPath>../src/config/sam_rh71_ek/osal/osal_definitions.h</itemPath>
-        <itemPath>../src/config/sam_rh71_ek/osal/osal_impl_basic.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="packs" projectFiles="true">
         <logicalFolder name="f1" displayName="ATSAMRH71F20C_DFP" projectFiles="true">
@@ -165,12 +170,60 @@
             <itemPath>../src/packs/ATSAMRH71F20C_DFP/component/trng.h</itemPath>
             <itemPath>../src/packs/ATSAMRH71F20C_DFP/component/wdt.h</itemPath>
             <itemPath>../src/packs/ATSAMRH71F20C_DFP/component/xdmac.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/component/rswdt.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/component/fuses.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="f3" displayName="instance" projectFiles="true">
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/chipid.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom0.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom1.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom2.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom3.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom4.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom5.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom6.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom7.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom8.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexcom9.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/flexramecc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/gmac.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/hefc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/hemc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/hsdramc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/hsmc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/icm.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/ip1553.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/matrix0.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/mcan0.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/mcan1.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/nmic.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/pio.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/pmc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/pwm0.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/pwm1.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/qspi.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/rstc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/rswdt.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/rtc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/rtt.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/sfr.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/sha.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/spw.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/supc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/tc0.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/tc1.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/tc2.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/tc3.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/tcmecc.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/trng.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/wdt.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/xdmac.h</itemPath>
+            <itemPath>../src/packs/ATSAMRH71F20C_DFP/instance/fuses.h</itemPath>
           </logicalFolder>
           <logicalFolder name="f2" displayName="pio" projectFiles="true">
             <itemPath>../src/packs/ATSAMRH71F20C_DFP/pio/samrh71f20c.h</itemPath>
           </logicalFolder>
-          <itemPath>../src/packs/ATSAMRH71F20C_DFP/device.h</itemPath>
-          <itemPath>../src/packs/ATSAMRH71F20C_DFP/atsamrh71f20c.h</itemPath>
+          <itemPath>../src/packs/ATSAMRH71F20C_DFP/samrh71f20c.h</itemPath>
         </logicalFolder>
         <logicalFolder name="f2" displayName="CMSIS" projectFiles="true">
           <logicalFolder name="f1" displayName="CMSIS" projectFiles="true">
@@ -185,6 +238,7 @@
                 <itemPath>../src/packs/CMSIS/CMSIS/Core/Include/cmsis_armclang_ltm.h</itemPath>
                 <itemPath>../src/packs/CMSIS/CMSIS/Core/Include/core_cm7.h</itemPath>
                 <itemPath>../src/packs/CMSIS/CMSIS/Core/Include/mpu_armv7.h</itemPath>
+                <itemPath>../src/packs/CMSIS/CMSIS/Core/Include/cachel1_armv7.h</itemPath>
               </logicalFolder>
             </logicalFolder>
           </logicalFolder>
@@ -195,6 +249,11 @@
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="config" projectFiles="true">
+        <logicalFolder name="f1" displayName="sam_rh71_ek" projectFiles="true">
+          <itemPath>../src/config/sam_rh71_ek/ATSAMRH71F20C.ld</itemPath>
+        </logicalFolder>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -217,7 +276,9 @@
             </logicalFolder>
             <logicalFolder name="f5" displayName="flexcom" projectFiles="true">
               <logicalFolder name="f1" displayName="spi" projectFiles="true">
-                <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/plib_flexcom4_spi.c</itemPath>
+                <logicalFolder name="f1" displayName="master" projectFiles="true">
+                  <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/spi/master/plib_flexcom4_spi_master.c</itemPath>
+                </logicalFolder>
               </logicalFolder>
               <logicalFolder name="f2" displayName="usart" projectFiles="true">
                 <itemPath>../src/config/sam_rh71_ek/peripheral/flexcom/usart/plib_flexcom1_usart.c</itemPath>
@@ -310,9 +371,26 @@
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false">
+      <logicalFolder name="f1" displayName="sam_rh71_ek.mhc" projectFiles="true">
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/BSP_SAM_RH71_Evaluation_Kit.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/cmsis.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/core.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/dfp.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/drv_sdspi.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/flexcom1.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/flexcom4.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/GraphSettings.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/HarmonyCore.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/hemc.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/project.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/settings.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/stdio.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/sys_fs.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/sys_time.yml</itemPath>
+        <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.mhc/tc0.yml</itemPath>
+      </logicalFolder>
       <itemPath>Makefile</itemPath>
-      <itemPath>../src/config/sam_rh71_ek/harmony.prj</itemPath>
-      <itemPath>../src/config/sam_rh71_ek/sam_rh71_ek.xml</itemPath>
+      <itemPath>../src/config/sam_rh71_ek/harmony-manifest-success.yml</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -326,13 +404,13 @@
         <targetDevice>ATSAMRH71F20C</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>j32</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>2.41</languageToolchainVersion>
+        <languageToolchainVersion>3.01</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <packs>
-        <pack name="SAMRH71_DFP" vendor="Microchip" version="2.0.89"/>
+        <pack name="SAMRH71_DFP" vendor="Microchip" version="2.4.125"/>
         <pack name="CMSIS" vendor="ARM" version="5.4.0"/>
       </packs>
       <ScriptingSettings>
@@ -354,6 +432,7 @@
       </compileType>
       <makeCustomizationType>
         <makeCustomizationPreStepEnabled>false</makeCustomizationPreStepEnabled>
+        <makeUseCleanTarget>false</makeUseCleanTarget>
         <makeCustomizationPreStep></makeCustomizationPreStep>
         <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
         <makeCustomizationPostStep></makeCustomizationPostStep>
@@ -407,7 +486,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value="../src;../src/config/sam_rh71_ek;../src/packs/ATSAMRH71F20C_DFP;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/CMSIS/;../src/config/sam_rh71_ek/system/fs/fat_fs/file_system;../src/config/sam_rh71_ek/system/fs/fat_fs/hardware_access"/>
+                  value="../src;../src/config/sam_rh71_ek;../src/config/sam_rh71_ek/system/fs/fat_fs/file_system;../src/config/sam_rh71_ek/system/fs/fat_fs/hardware_access;../src/packs/ATSAMRH71F20C_DFP;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
@@ -419,6 +498,7 @@
         <property key="preprocessor-macros" value=""/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
+        <property key="tentative-definitions" value="-fno-common"/>
         <property key="toplevel-reordering" value=""/>
         <property key="unaligned-access" value=""/>
         <property key="use-cci" value="false"/>
@@ -450,6 +530,7 @@
       </C32-AS>
       <C32-CO>
         <property key="coverage-enable" value=""/>
+        <property key="stack-guidance" value="false"/>
       </C32-CO>
       <C32-LD>
         <property key="additional-options-use-response-files" value="false"/>
@@ -502,7 +583,8 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exceptions" value="true"/>
         <property key="exclude-floating-point" value="false"/>
-        <property key="extra-include-directories" value=""/>
+        <property key="extra-include-directories"
+                  value="../src;../src/config/sam_rh71_ek;../src/config/sam_rh71_ek/system/fs/fat_fs/file_system;../src/config/sam_rh71_ek/system/fs/fat_fs/hardware_access;../src/packs/ATSAMRH71F20C_DFP;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
@@ -530,6 +612,7 @@
         <property key="omit-pack-options" value="1"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
+        <property key="stack-smashing" value=""/>
         <property key="wpo-lto" value="false"/>
       </C32Global>
       <ICD4Tool>
@@ -1072,11 +1155,17 @@
                   value=""/>
         <property key="warningmessagebreakoptions.warningmessages" value="holdstate"/>
       </Simulator>
-      <j32>
+      <Tool>
         <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="arm.use_vtor" value="false"/>
+        <property key="arm.vtor_adr" value="exception_table"/>
         <property key="communication.autoselectspeed" value="true"/>
         <property key="communication.interface" value="swd"/>
         <property key="communication.speed" value="4"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
+        <property key="lastid" value=""/>
+        <property key="loader.board_file" value="${ProjectDir}/board.xboard"/>
         <property key="memories.bootflash" value="true"/>
         <property key="memories.configurationmemory" value="true"/>
         <property key="memories.eeprom" value="true"/>
@@ -1095,6 +1184,44 @@
         <property key="programoptions.preserveprogramrange.end" value="0x1001ffff"/>
         <property key="programoptions.preserveprogramrange.start" value="0x10000000"/>
         <property key="programoptions.resetafterprogram" value="true"/>
+        <property key="script.has_reset" value="true"/>
+        <property key="script.log_level" value="1"/>
+        <property key="script.reset_delay" value="0"/>
+        <property key="script.show_output" value="false"/>
+      </Tool>
+      <j32>
+        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="arm.use_vtor" value="false"/>
+        <property key="arm.vtor_adr" value="exception_table"/>
+        <property key="communication.autoselectspeed" value="true"/>
+        <property key="communication.interface" value="swd"/>
+        <property key="communication.speed" value="4"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
+        <property key="lastid" value=""/>
+        <property key="loader.board_file" value="${ProjectDir}/board.xboard"/>
+        <property key="memories.bootflash" value="true"/>
+        <property key="memories.configurationmemory" value="true"/>
+        <property key="memories.eeprom" value="true"/>
+        <property key="memories.id" value="true"/>
+        <property key="memories.instruction.ram" value="true"/>
+        <property key="memories.instruction.ram.end"
+                  value="${memories.instruction.ram.end.value}"/>
+        <property key="memories.instruction.ram.start"
+                  value="${memories.instruction.ram.start.value}"/>
+        <property key="memories.programmemory" value="true"/>
+        <property key="memories.programmemory.end" value="0x1001ffff"/>
+        <property key="memories.programmemory.start" value="0x10000000"/>
+        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.preservebootflash" value="false"/>
+        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.preserveprogramrange.end" value="0x1001ffff"/>
+        <property key="programoptions.preserveprogramrange.start" value="0x10000000"/>
+        <property key="programoptions.resetafterprogram" value="true"/>
+        <property key="script.has_reset" value="true"/>
+        <property key="script.log_level" value="1"/>
+        <property key="script.reset_delay" value="0"/>
+        <property key="script.show_output" value="false"/>
       </j32>
       <jlink>
         <property key="AutoSelectMemRanges" value="auto"/>

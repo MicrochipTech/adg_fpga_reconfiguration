@@ -153,8 +153,8 @@ DPUCHAR jtag_inp(void)
 static inline void jtag_outp(DPUCHAR outdata)
 {
     /* User defined */
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_MSKR = 0x1D;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = outdata;
+    PIOA_REGS->PIO_MSKR = 0x1D;
+    PIOA_REGS->PIO_ODSR = outdata;
     /* End of User defined */
 }
 
@@ -189,10 +189,10 @@ void __attribute__((tcm)) dp_jtag_tms(DPUCHAR tms)
 {	
     jtag_port_reg &= ~(TMS | TCK);
     jtag_port_reg |= (tms ? TMS : 0u);
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_MSKR = 0x1D;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
+    PIOA_REGS->PIO_MSKR = 0x1D;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
     jtag_port_reg |= TCK;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
     return;
 }
 
@@ -212,10 +212,10 @@ void __attribute__((tcm)) dp_jtag_tms_tdi(DPUCHAR tms, DPUCHAR tdi)
 {
     jtag_port_reg &= ~(TMS | TCK | TDI);
     jtag_port_reg |= ((tms ? TMS : 0u) | (tdi ? TDI : 0u));
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_MSKR = 0x1D;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
+    PIOA_REGS->PIO_MSKR = 0x1D;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
     jtag_port_reg |= TCK;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
     return;    
 }
 
@@ -241,15 +241,15 @@ DPUCHAR __attribute__((tcm)) dp_jtag_tms_tdi_tdo(DPUCHAR tms, DPUCHAR tdi)
     uint32_t tdo;
     jtag_port_reg &= ~(TMS | TCK | TDI);
     jtag_port_reg |= ((tms ? TMS : 0u) | (tdi ? TDI : 0u));
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_MSKR = 0x1D;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
-    tdo = ((pio_group_registers_t*)PIO_PORT_A)->PIO_PDSR;
+    PIOA_REGS->PIO_MSKR = 0x1D;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
+    tdo = PIOA_REGS->PIO_PDSR;
     if ( (tdo&TDO) == 0)
         tdo = 0x00;
     else
         tdo = 0x80;
     jtag_port_reg |= TCK;
-    ((pio_group_registers_t*)PIO_PORT_A)->PIO_ODSR = jtag_port_reg;
+    PIOA_REGS->PIO_ODSR = jtag_port_reg;
     return tdo;
 }
 
@@ -297,7 +297,6 @@ void dp_exit_avionics_mode(void)
     dp_delay(10);
     RTG4_DEVRST_N_Set();
     dp_delay(10);
-
     return;
 }
 

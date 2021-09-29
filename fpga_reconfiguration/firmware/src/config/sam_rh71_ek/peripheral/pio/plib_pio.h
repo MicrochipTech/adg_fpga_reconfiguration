@@ -81,17 +81,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<0); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<0);\
                                         } while (0)
-#define GPIO_PA0_Get()               ((PIOA_REGS->PIO_PDSR >> 0) & 0x1)
 #define GPIO_PA0_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<0); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define GPIO_PA0_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<0); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define GPIO_PA0_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<0))
-#define GPIO_PA0_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<0))
+#define GPIO_PA0_Get()               ((PIOA_REGS->PIO_PDSR >> 0) & 0x1)
 #define GPIO_PA0_PIN                  PIO_PIN_PA0
 
 /*** Macros for GPIO_PA1 pin ***/
@@ -101,17 +99,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<1); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<1);\
                                         } while (0)
-#define GPIO_PA1_Get()               ((PIOA_REGS->PIO_PDSR >> 1) & 0x1)
 #define GPIO_PA1_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<1); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define GPIO_PA1_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<1); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define GPIO_PA1_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<1))
-#define GPIO_PA1_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<1))
+#define GPIO_PA1_Get()               ((PIOA_REGS->PIO_PDSR >> 1) & 0x1)
 #define GPIO_PA1_PIN                  PIO_PIN_PA1
 
 /*** Macros for GPIO_PA2 pin ***/
@@ -121,17 +117,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<2); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<2);\
                                         } while (0)
-#define GPIO_PA2_Get()               ((PIOA_REGS->PIO_PDSR >> 2) & 0x1)
 #define GPIO_PA2_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<2); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define GPIO_PA2_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<2); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define GPIO_PA2_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<2))
-#define GPIO_PA2_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<2))
+#define GPIO_PA2_Get()               ((PIOA_REGS->PIO_PDSR >> 2) & 0x1)
 #define GPIO_PA2_PIN                  PIO_PIN_PA2
 
 /*** Macros for GPIO_PA3 pin ***/
@@ -141,17 +135,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<3); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<3);\
                                         } while (0)
-#define GPIO_PA3_Get()               ((PIOA_REGS->PIO_PDSR >> 3) & 0x1)
 #define GPIO_PA3_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<3); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define GPIO_PA3_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<3); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define GPIO_PA3_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<3))
-#define GPIO_PA3_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<3))
+#define GPIO_PA3_Get()               ((PIOA_REGS->PIO_PDSR >> 3) & 0x1)
 #define GPIO_PA3_PIN                  PIO_PIN_PA3
 
 /*** Macros for GPIO_PA4 pin ***/
@@ -161,17 +153,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<4); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<4);\
                                         } while (0)
-#define GPIO_PA4_Get()               ((PIOA_REGS->PIO_PDSR >> 4) & 0x1)
 #define GPIO_PA4_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<4); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define GPIO_PA4_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<4); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define GPIO_PA4_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<4))
-#define GPIO_PA4_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<4))
+#define GPIO_PA4_Get()               ((PIOA_REGS->PIO_PDSR >> 4) & 0x1)
 #define GPIO_PA4_PIN                  PIO_PIN_PA4
 
 /*** Macros for RTG4_DEVRST_N pin ***/
@@ -181,17 +171,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<5); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<5);\
                                         } while (0)
-#define RTG4_DEVRST_N_Get()               ((PIOA_REGS->PIO_PDSR >> 5) & 0x1)
 #define RTG4_DEVRST_N_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<5); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define RTG4_DEVRST_N_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<5); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define RTG4_DEVRST_N_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<5))
-#define RTG4_DEVRST_N_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<5))
+#define RTG4_DEVRST_N_Get()               ((PIOA_REGS->PIO_PDSR >> 5) & 0x1)
 #define RTG4_DEVRST_N_PIN                  PIO_PIN_PA5
 
 /*** Macros for LED_READ pin ***/
@@ -201,17 +189,15 @@
                                             PIOA_REGS->PIO_MSKR = (1<<12); \
                                             PIOA_REGS->PIO_ODSR ^= (1<<12);\
                                         } while (0)
-#define LED_READ_Get()               ((PIOA_REGS->PIO_PDSR >> 12) & 0x1)
 #define LED_READ_OutputEnable()      do {\
                                             PIOA_REGS->PIO_MSKR = (1<<12); \
-										     PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define LED_READ_InputEnable()       do { \
                                             PIOA_REGS->PIO_MSKR = (1<<12); \
-										     PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOA_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define LED_READ_InterruptEnable()   (PIOA_REGS->PIO_IER = (1<<12))
-#define LED_READ_InterruptDisable()  (PIOA_REGS->PIO_IDR = (1<<12))
+#define LED_READ_Get()               ((PIOA_REGS->PIO_PDSR >> 12) & 0x1)
 #define LED_READ_PIN                  PIO_PIN_PA12
 
 /*** Macros for SPI_SS pin ***/
@@ -221,18 +207,17 @@
                                             PIOC_REGS->PIO_MSKR = (1<<3); \
                                             PIOC_REGS->PIO_ODSR ^= (1<<3);\
                                         } while (0)
-#define SPI_SS_Get()               ((PIOC_REGS->PIO_PDSR >> 3) & 0x1)
 #define SPI_SS_OutputEnable()      do {\
                                             PIOC_REGS->PIO_MSKR = (1<<3); \
-										     PIOC_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOC_REGS->PIO_CFGR |=(1 << PIO_CFGR_DIR_Pos);\
                                         }while(0)
 #define SPI_SS_InputEnable()       do { \
                                             PIOC_REGS->PIO_MSKR = (1<<3); \
-										     PIOC_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
+                                            PIOC_REGS->PIO_CFGR &= ~(1 << PIO_CFGR_DIR_Pos);\
                                         } while (0)
-#define SPI_SS_InterruptEnable()   (PIOC_REGS->PIO_IER = (1<<3))
-#define SPI_SS_InterruptDisable()  (PIOC_REGS->PIO_IDR = (1<<3))
+#define SPI_SS_Get()               ((PIOC_REGS->PIO_PDSR >> 3) & 0x1)
 #define SPI_SS_PIN                  PIO_PIN_PC3
+
 
 
 // *****************************************************************************
@@ -252,30 +237,28 @@
     device data sheet to determine which ports are supported.
 */
 
-typedef enum
-{
-    /* Port A Pins */
-    PIO_PORT_A = (uint32_t)&(PIO_REGS->PIO_GROUP[0]),
+/* Port A Pins */
+#define PIO_PORT_A 0U
 
-    /* Port B Pins */
-    PIO_PORT_B = (uint32_t)&(PIO_REGS->PIO_GROUP[1]),
+/* Port B Pins */
+#define PIO_PORT_B 1U
 
     /* Port C Pins */
-    PIO_PORT_C = (uint32_t)&(PIO_REGS->PIO_GROUP[2]),
+#define PIO_PORT_C 2U
 
-    /* Port D Pins */
-    PIO_PORT_D = (uint32_t)&(PIO_REGS->PIO_GROUP[3]),
+/* Port D Pins */
+#define PIO_PORT_D 3U
 
-    /* Port E Pins */
-    PIO_PORT_E = (uint32_t)&(PIO_REGS->PIO_GROUP[4]),
+/* Port E Pins */
+#define PIO_PORT_E 4U
 
-    /* Port F Pins */
-    PIO_PORT_F = (uint32_t)&(PIO_REGS->PIO_GROUP[5]),
+/* Port F Pins */
+#define PIO_PORT_F 5U
 
-    /* Port G Pins */
-    PIO_PORT_G = (uint32_t)&(PIO_REGS->PIO_GROUP[6])
+/* Port G Pins */
+#define PIO_PORT_G 6U
 
-} PIO_PORT;
+typedef uint32_t PIO_PORT;
 
 // *****************************************************************************
 /* PIO Port Pins
@@ -614,7 +597,7 @@ uint32_t PIO_PortRead(PIO_PORT port);
 
   Example:
     <code>
-    // Write binary value 0011 to the pins PC3, PC2, PC1 and PC0 respectively.
+
     PIO_PortWrite(PIO_PORT_C, 0x0F, 0xF563D453);
 
     </code>
@@ -689,7 +672,6 @@ uint32_t PIO_PortLatchRead ( PIO_PORT port );
   Example:
     <code>
 
-    // Set PC5 and PC7 pins to 1
     PIO_PortSet(PIO_PORT_C, 0x00A0);
 
     </code>
@@ -726,7 +708,6 @@ void PIO_PortSet(PIO_PORT port, uint32_t mask);
   Example:
     <code>
 
-    // Clear PC5 and PC7 pins to 0
     PIO_PortClear(PIO_PORT_C, 0x00A0);
 
     </code>
@@ -801,7 +782,6 @@ void PIO_PortToggle(PIO_PORT port, uint32_t mask);
   Example:
     <code>
 
-    // Make PC5 and PC7 pins as input
     PIO_PortInputEnable(PIO_PORT_C, 0x00A0);
 
     </code>
@@ -837,7 +817,6 @@ void PIO_PortInputEnable(PIO_PORT port, uint32_t mask);
   Example:
     <code>
 
-    // Make PC5 and PC7 pins as output
     PIO_PortOutputEnable(PIO_PORT_C, 0x00A0);
 
     </code>
@@ -846,84 +825,6 @@ void PIO_PortInputEnable(PIO_PORT port, uint32_t mask);
     None.
 */
 void PIO_PortOutputEnable(PIO_PORT port, uint32_t mask);
-
-// *****************************************************************************
-/* Function:
-    void PIO_PortInterruptEnable(PIO_PORT port, uint32_t mask)
-
-  Summary:
-    Enables IO interrupt on selected IO pins of a port.
-
-  Description:
-    This function enables interrupt on selected IO pins of selected port.
-
-  Precondition:
-    None.
-
-  Parameters:
-    port       - One of the IO ports from the enum PIO_PORT
-
-    mask       - Is a 32 bit value in which positions of 0s and 1s decide
-                 which IO pins of the selected port will have interrupt
-                 enabled.  The bit positions of mask value which are set as 1,
-                 IO interrupt of corresponding IO pin of the selected port
-                 will be enabled.  The bit positions of mask value which are
-                 cleared to 0, IO interrupt of corresponding IO pin of the
-                 selected port will remain unchanged.
-
-  Returns:
-    None.
-
-  Example:
-    <code>
-
-    // Enable IO interrupt for PC5 and PC7 pins
-    PIO_PortInterruptEnable(PIO_PORT_C, 0x00A0);
-
-    </code>
-
-  Remarks:
-    None.
-*/
-void PIO_PortInterruptEnable(PIO_PORT port, uint32_t mask);
-
-// *****************************************************************************
-/* Function:
-    void PIO_PortInterruptDisable(PIO_PORT port, uint32_t mask)
-
-  Summary:
-    Disables IO interrupt on selected IO pins of a port.
-
-  Description:
-    This function disables IO interrupt on selected IO pins of selected port.
-
-  Precondition:
-    None.
-
-  Parameters:
-    port       - One of the IO ports from the enum PIO_PORT
-    mask       - Is a 32 bit value in which positions of 0s and 1s decide
-                 which IO pins of the selected port will have interrupt
-                 disabled.  The bit positions of mask value which are set as 1,
-                 IO interrupt of corresponding IO pin of the selected port
-                 will be disabled.  The bit positions of mask value which are
-                 cleared to 0, IO interrupt of corresponding IO pin of the
-                 selected port will remain unchanged.
-  Returns:
-    None.
-
-  Example:
-    <code>
-
-    // Disable IO interrupt for PB9 and PB1 pins
-    PIO_PortInterruptDisable(PIO_PORT_C, 0x0202);
-
-    </code>
-
-  Remarks:
-    None.
-*/
-void PIO_PortInterruptDisable(PIO_PORT port, uint32_t mask);
 
 
 // *****************************************************************************
@@ -964,7 +865,9 @@ void PIO_PortInterruptDisable(PIO_PORT port, uint32_t mask);
 */
 static inline void PIO_PinWrite(PIO_PIN pin, bool value)
 {
-    PIO_PortWrite((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), (uint32_t)(0x1) << (pin & 0x1f), (uint32_t)(value) << (pin & 0x1f));
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortWrite(port, mask, value ? mask : 0U);
 }
 
 // *****************************************************************************
@@ -1004,7 +907,9 @@ static inline void PIO_PinWrite(PIO_PIN pin, bool value)
 
 static inline bool PIO_PinRead(PIO_PIN pin)
 {
-    return (bool)((PIO_PortRead((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5)))) >> (pin & 0x1F)) & 0x1);
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    return (((PIO_PortRead(port) & mask) != 0U) ? true : false);
 }
 
 
@@ -1042,7 +947,9 @@ static inline bool PIO_PinRead(PIO_PIN pin)
 */
 static inline bool PIO_PinLatchRead(PIO_PIN pin)
 {
-    return (bool)((PIO_PortLatchRead((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5)))) >> (pin & 0x1F)) & 0x1);
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    return (((PIO_PortLatchRead(port) & mask) != 0U) ? true : false);
 }
 
 // *****************************************************************************
@@ -1076,7 +983,9 @@ static inline bool PIO_PinLatchRead(PIO_PIN pin)
 */
 static inline void PIO_PinToggle(PIO_PIN pin)
 {
-    PIO_PortToggle((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), 0x1 << (pin & 0x1F));
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortToggle(port, mask);
 }
 
 // *****************************************************************************
@@ -1110,7 +1019,9 @@ static inline void PIO_PinToggle(PIO_PIN pin)
 */
 static inline void PIO_PinSet(PIO_PIN pin)
 {
-    PIO_PortSet((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), 0x1 << (pin & 0x1F));
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortSet(port, mask);
 }
 
 // *****************************************************************************
@@ -1144,7 +1055,9 @@ static inline void PIO_PinSet(PIO_PIN pin)
 */
 static inline void PIO_PinClear(PIO_PIN pin)
 {
-    PIO_PortClear((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), 0x1 << (pin & 0x1F));
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortClear(port, mask);
 }
 
 // *****************************************************************************
@@ -1177,8 +1090,10 @@ static inline void PIO_PinClear(PIO_PIN pin)
     None.
 */
 static inline void PIO_PinInputEnable(PIO_PIN pin)
-{
-    PIO_PortInputEnable((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), 0x1 << (pin & 0x1F));
+{   
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortInputEnable(port, mask);
 }
 
 // *****************************************************************************
@@ -1212,7 +1127,9 @@ static inline void PIO_PinInputEnable(PIO_PIN pin)
 */
 static inline void PIO_PinOutputEnable(PIO_PIN pin)
 {
-    PIO_PortOutputEnable((PIO_PORT)(PIO_BASE_ADDRESS + (0x40 * (pin>>5))), 0x1 << (pin & 0x1F));
+    uint32_t port = (uint32_t)pin >> 5U;
+    uint32_t mask = 1UL << ((uint32_t)pin & 0x1FU);   
+    PIO_PortOutputEnable(port, mask);
 }
 
 

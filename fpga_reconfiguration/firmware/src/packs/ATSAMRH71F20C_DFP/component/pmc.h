@@ -1,7 +1,7 @@
-/**
- * \brief Component description for PMC
+/*
+ * Component description for PMC
  *
- * Copyright (c) 2020 Microchip Technology Inc. and its subsidiaries.
+ * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
  *
  * Subject to your compliance with these terms, you may use Microchip software and any derivatives
  * exclusively with Microchip products. It is your responsibility to comply with third party license
@@ -20,7 +20,7 @@
  *
  */
 
-/* file generated from device description version 2020-02-03T17:22:07Z */
+/* file generated from device description version 2021-05-04T16:48:28Z */
 #ifndef _SAMRH71_PMC_COMPONENT_H_
 #define _SAMRH71_PMC_COMPONENT_H_
 
@@ -112,17 +112,17 @@
 #define CKGR_MOR_KEY_Pos                      _U_(16)                                              /**< (CKGR_MOR) Write Access Password Position */
 #define CKGR_MOR_KEY_Msk                      (_U_(0xFF) << CKGR_MOR_KEY_Pos)                      /**< (CKGR_MOR) Write Access Password Mask */
 #define CKGR_MOR_KEY(value)                   (CKGR_MOR_KEY_Msk & ((value) << CKGR_MOR_KEY_Pos))  
-#define   CKGR_MOR_KEY_PASSWD_Val             _U_(0x37)                                            /**< (CKGR_MOR) Writing any other value in this field aborts the write operation.Always reads as 0.  */
-#define CKGR_MOR_KEY_PASSWD                   (CKGR_MOR_KEY_PASSWD_Val << CKGR_MOR_KEY_Pos)        /**< (CKGR_MOR) Writing any other value in this field aborts the write operation.Always reads as 0. Position  */
+#define   CKGR_MOR_KEY_PASSWD_Val             _U_(0x37)                                            /**< (CKGR_MOR) Writing any other value in this field aborts the write operation. Always reads as 0.  */
+#define CKGR_MOR_KEY_PASSWD                   (CKGR_MOR_KEY_PASSWD_Val << CKGR_MOR_KEY_Pos)        /**< (CKGR_MOR) Writing any other value in this field aborts the write operation. Always reads as 0. Position  */
 #define CKGR_MOR_MOSCSEL_Pos                  _U_(24)                                              /**< (CKGR_MOR) Main Clock Oscillator Selection Position */
 #define CKGR_MOR_MOSCSEL_Msk                  (_U_(0x1) << CKGR_MOR_MOSCSEL_Pos)                   /**< (CKGR_MOR) Main Clock Oscillator Selection Mask */
 #define CKGR_MOR_MOSCSEL(value)               (CKGR_MOR_MOSCSEL_Msk & ((value) << CKGR_MOR_MOSCSEL_Pos))
 #define CKGR_MOR_CFDEN_Pos                    _U_(25)                                              /**< (CKGR_MOR) Clock Failure Detector Enable Position */
 #define CKGR_MOR_CFDEN_Msk                    (_U_(0x1) << CKGR_MOR_CFDEN_Pos)                     /**< (CKGR_MOR) Clock Failure Detector Enable Mask */
 #define CKGR_MOR_CFDEN(value)                 (CKGR_MOR_CFDEN_Msk & ((value) << CKGR_MOR_CFDEN_Pos))
-#define CKGR_MOR_XT32KFME_Pos                 _U_(26)                                              /**< (CKGR_MOR) 32.768 kHz Crystal Oscillator Frequency Monitoring Enable Position */
-#define CKGR_MOR_XT32KFME_Msk                 (_U_(0x1) << CKGR_MOR_XT32KFME_Pos)                  /**< (CKGR_MOR) 32.768 kHz Crystal Oscillator Frequency Monitoring Enable Mask */
-#define CKGR_MOR_XT32KFME(value)              (CKGR_MOR_XT32KFME_Msk & ((value) << CKGR_MOR_XT32KFME_Pos))
+#define CKGR_MOR_EXT32KFME_Pos                _U_(26)                                              /**< (CKGR_MOR) 32.768 kHz Crystal Oscillator Frequency Monitoring Enable Position */
+#define CKGR_MOR_EXT32KFME_Msk                (_U_(0x1) << CKGR_MOR_EXT32KFME_Pos)                 /**< (CKGR_MOR) 32.768 kHz Crystal Oscillator Frequency Monitoring Enable Mask */
+#define CKGR_MOR_EXT32KFME(value)             (CKGR_MOR_EXT32KFME_Msk & ((value) << CKGR_MOR_EXT32KFME_Pos))
 #define CKGR_MOR_BCPURST_Pos                  _U_(27)                                              /**< (CKGR_MOR) Bad CPU Clock Reset Enable Position */
 #define CKGR_MOR_BCPURST_Msk                  (_U_(0x1) << CKGR_MOR_BCPURST_Pos)                   /**< (CKGR_MOR) Bad CPU Clock Reset Enable Mask */
 #define CKGR_MOR_BCPURST(value)               (CKGR_MOR_BCPURST_Msk & ((value) << CKGR_MOR_BCPURST_Pos))
@@ -248,7 +248,10 @@
 #define   PMC_MCKR_MDIV_PCK_DIV2_Val          _U_(0x1)                                             /**< (PMC_MCKR) MCK is FCLK divided by 2.  */
 #define PMC_MCKR_MDIV_EQ_PCK                  (PMC_MCKR_MDIV_EQ_PCK_Val << PMC_MCKR_MDIV_Pos)      /**< (PMC_MCKR) MCK is FCLK divided by 1. Position  */
 #define PMC_MCKR_MDIV_PCK_DIV2                (PMC_MCKR_MDIV_PCK_DIV2_Val << PMC_MCKR_MDIV_Pos)    /**< (PMC_MCKR) MCK is FCLK divided by 2. Position  */
-#define PMC_MCKR_Msk                          _U_(0x00000173)                                      /**< (PMC_MCKR) Register Mask  */
+#define PMC_MCKR_ZERO_Pos                     _U_(13)                                              /**< (PMC_MCKR) Shall be always write at '0' Position */
+#define PMC_MCKR_ZERO_Msk                     (_U_(0x1) << PMC_MCKR_ZERO_Pos)                      /**< (PMC_MCKR) Shall be always write at '0' Mask */
+#define PMC_MCKR_ZERO(value)                  (PMC_MCKR_ZERO_Msk & ((value) << PMC_MCKR_ZERO_Pos))
+#define PMC_MCKR_Msk                          _U_(0x00002173)                                      /**< (PMC_MCKR) Register Mask  */
 
 
 /* -------- PMC_PCK : (PMC Offset: 0x40) (R/W 32) Programmable Clock Register -------- */
@@ -296,15 +299,6 @@
 #define PMC_IER_PCKRDY3_Pos                   _U_(11)                                              /**< (PMC_IER) Programmable Clock Ready 3 Interrupt Enable Position */
 #define PMC_IER_PCKRDY3_Msk                   (_U_(0x1) << PMC_IER_PCKRDY3_Pos)                    /**< (PMC_IER) Programmable Clock Ready 3 Interrupt Enable Mask */
 #define PMC_IER_PCKRDY3(value)                (PMC_IER_PCKRDY3_Msk & ((value) << PMC_IER_PCKRDY3_Pos))
-#define PMC_IER_PCKRDY4_Pos                   _U_(12)                                              /**< (PMC_IER) Programmable Clock Ready 4 Interrupt Enable Position */
-#define PMC_IER_PCKRDY4_Msk                   (_U_(0x1) << PMC_IER_PCKRDY4_Pos)                    /**< (PMC_IER) Programmable Clock Ready 4 Interrupt Enable Mask */
-#define PMC_IER_PCKRDY4(value)                (PMC_IER_PCKRDY4_Msk & ((value) << PMC_IER_PCKRDY4_Pos))
-#define PMC_IER_PCKRDY5_Pos                   _U_(13)                                              /**< (PMC_IER) Programmable Clock Ready 5 Interrupt Enable Position */
-#define PMC_IER_PCKRDY5_Msk                   (_U_(0x1) << PMC_IER_PCKRDY5_Pos)                    /**< (PMC_IER) Programmable Clock Ready 5 Interrupt Enable Mask */
-#define PMC_IER_PCKRDY5(value)                (PMC_IER_PCKRDY5_Msk & ((value) << PMC_IER_PCKRDY5_Pos))
-#define PMC_IER_PCKRDY6_Pos                   _U_(14)                                              /**< (PMC_IER) Programmable Clock Ready 6 Interrupt Enable Position */
-#define PMC_IER_PCKRDY6_Msk                   (_U_(0x1) << PMC_IER_PCKRDY6_Pos)                    /**< (PMC_IER) Programmable Clock Ready 6 Interrupt Enable Mask */
-#define PMC_IER_PCKRDY6(value)                (PMC_IER_PCKRDY6_Msk & ((value) << PMC_IER_PCKRDY6_Pos))
 #define PMC_IER_MOSCSELS_Pos                  _U_(16)                                              /**< (PMC_IER) Main Clock Source Oscillator Selection Status Interrupt Enable Position */
 #define PMC_IER_MOSCSELS_Msk                  (_U_(0x1) << PMC_IER_MOSCSELS_Pos)                   /**< (PMC_IER) Main Clock Source Oscillator Selection Status Interrupt Enable Mask */
 #define PMC_IER_MOSCSELS(value)               (PMC_IER_MOSCSELS_Msk & ((value) << PMC_IER_MOSCSELS_Pos))
@@ -314,16 +308,16 @@
 #define PMC_IER_CFDEV_Pos                     _U_(18)                                              /**< (PMC_IER) Clock Failure Detector Event Interrupt Enable Position */
 #define PMC_IER_CFDEV_Msk                     (_U_(0x1) << PMC_IER_CFDEV_Pos)                      /**< (PMC_IER) Clock Failure Detector Event Interrupt Enable Mask */
 #define PMC_IER_CFDEV(value)                  (PMC_IER_CFDEV_Msk & ((value) << PMC_IER_CFDEV_Pos))
-#define PMC_IER_XT32KERR_Pos                  _U_(21)                                              /**< (PMC_IER) 32.768 kHz Crystal Oscillator Error Interrupt Enable Position */
-#define PMC_IER_XT32KERR_Msk                  (_U_(0x1) << PMC_IER_XT32KERR_Pos)                   /**< (PMC_IER) 32.768 kHz Crystal Oscillator Error Interrupt Enable Mask */
-#define PMC_IER_XT32KERR(value)               (PMC_IER_XT32KERR_Msk & ((value) << PMC_IER_XT32KERR_Pos))
+#define PMC_IER_EXT32KERR_Pos                 _U_(21)                                              /**< (PMC_IER) 32.768 kHz Crystal Oscillator Error Interrupt Enable Position */
+#define PMC_IER_EXT32KERR_Msk                 (_U_(0x1) << PMC_IER_EXT32KERR_Pos)                  /**< (PMC_IER) 32.768 kHz Crystal Oscillator Error Interrupt Enable Mask */
+#define PMC_IER_EXT32KERR(value)              (PMC_IER_EXT32KERR_Msk & ((value) << PMC_IER_EXT32KERR_Pos))
 #define PMC_IER_CPUMON_Pos                    _U_(23)                                              /**< (PMC_IER) CPU Clock Monitor Interrupt Enable Position */
 #define PMC_IER_CPUMON_Msk                    (_U_(0x1) << PMC_IER_CPUMON_Pos)                     /**< (PMC_IER) CPU Clock Monitor Interrupt Enable Mask */
 #define PMC_IER_CPUMON(value)                 (PMC_IER_CPUMON_Msk & ((value) << PMC_IER_CPUMON_Pos))
-#define PMC_IER_Msk                           _U_(0x00A77F0F)                                      /**< (PMC_IER) Register Mask  */
+#define PMC_IER_Msk                           _U_(0x00A70F0F)                                      /**< (PMC_IER) Register Mask  */
 
 #define PMC_IER_PCKRDY_Pos                    _U_(8)                                               /**< (PMC_IER Position) Programmable Clock Ready x Interrupt Enable */
-#define PMC_IER_PCKRDY_Msk                    (_U_(0x7F) << PMC_IER_PCKRDY_Pos)                    /**< (PMC_IER Mask) PCKRDY */
+#define PMC_IER_PCKRDY_Msk                    (_U_(0xF) << PMC_IER_PCKRDY_Pos)                     /**< (PMC_IER Mask) PCKRDY */
 #define PMC_IER_PCKRDY(value)                 (PMC_IER_PCKRDY_Msk & ((value) << PMC_IER_PCKRDY_Pos)) 
 
 /* -------- PMC_IDR : (PMC Offset: 0x64) ( /W 32) Interrupt Disable Register -------- */
@@ -351,15 +345,6 @@
 #define PMC_IDR_PCKRDY3_Pos                   _U_(11)                                              /**< (PMC_IDR) Programmable Clock Ready 3 Interrupt Disable Position */
 #define PMC_IDR_PCKRDY3_Msk                   (_U_(0x1) << PMC_IDR_PCKRDY3_Pos)                    /**< (PMC_IDR) Programmable Clock Ready 3 Interrupt Disable Mask */
 #define PMC_IDR_PCKRDY3(value)                (PMC_IDR_PCKRDY3_Msk & ((value) << PMC_IDR_PCKRDY3_Pos))
-#define PMC_IDR_PCKRDY4_Pos                   _U_(12)                                              /**< (PMC_IDR) Programmable Clock Ready 4 Interrupt Disable Position */
-#define PMC_IDR_PCKRDY4_Msk                   (_U_(0x1) << PMC_IDR_PCKRDY4_Pos)                    /**< (PMC_IDR) Programmable Clock Ready 4 Interrupt Disable Mask */
-#define PMC_IDR_PCKRDY4(value)                (PMC_IDR_PCKRDY4_Msk & ((value) << PMC_IDR_PCKRDY4_Pos))
-#define PMC_IDR_PCKRDY5_Pos                   _U_(13)                                              /**< (PMC_IDR) Programmable Clock Ready 5 Interrupt Disable Position */
-#define PMC_IDR_PCKRDY5_Msk                   (_U_(0x1) << PMC_IDR_PCKRDY5_Pos)                    /**< (PMC_IDR) Programmable Clock Ready 5 Interrupt Disable Mask */
-#define PMC_IDR_PCKRDY5(value)                (PMC_IDR_PCKRDY5_Msk & ((value) << PMC_IDR_PCKRDY5_Pos))
-#define PMC_IDR_PCKRDY6_Pos                   _U_(14)                                              /**< (PMC_IDR) Programmable Clock Ready 6 Interrupt Disable Position */
-#define PMC_IDR_PCKRDY6_Msk                   (_U_(0x1) << PMC_IDR_PCKRDY6_Pos)                    /**< (PMC_IDR) Programmable Clock Ready 6 Interrupt Disable Mask */
-#define PMC_IDR_PCKRDY6(value)                (PMC_IDR_PCKRDY6_Msk & ((value) << PMC_IDR_PCKRDY6_Pos))
 #define PMC_IDR_MOSCSELS_Pos                  _U_(16)                                              /**< (PMC_IDR) Main Clock Source Oscillator Selection Status Interrupt Disable Position */
 #define PMC_IDR_MOSCSELS_Msk                  (_U_(0x1) << PMC_IDR_MOSCSELS_Pos)                   /**< (PMC_IDR) Main Clock Source Oscillator Selection Status Interrupt Disable Mask */
 #define PMC_IDR_MOSCSELS(value)               (PMC_IDR_MOSCSELS_Msk & ((value) << PMC_IDR_MOSCSELS_Pos))
@@ -369,16 +354,16 @@
 #define PMC_IDR_CFDEV_Pos                     _U_(18)                                              /**< (PMC_IDR) Clock Failure Detector Event Interrupt Disable Position */
 #define PMC_IDR_CFDEV_Msk                     (_U_(0x1) << PMC_IDR_CFDEV_Pos)                      /**< (PMC_IDR) Clock Failure Detector Event Interrupt Disable Mask */
 #define PMC_IDR_CFDEV(value)                  (PMC_IDR_CFDEV_Msk & ((value) << PMC_IDR_CFDEV_Pos))
-#define PMC_IDR_XT32KERR_Pos                  _U_(21)                                              /**< (PMC_IDR) 32.768 kHz Crystal Oscillator Error Interrupt Disable Position */
-#define PMC_IDR_XT32KERR_Msk                  (_U_(0x1) << PMC_IDR_XT32KERR_Pos)                   /**< (PMC_IDR) 32.768 kHz Crystal Oscillator Error Interrupt Disable Mask */
-#define PMC_IDR_XT32KERR(value)               (PMC_IDR_XT32KERR_Msk & ((value) << PMC_IDR_XT32KERR_Pos))
+#define PMC_IDR_EXT32KERR_Pos                 _U_(21)                                              /**< (PMC_IDR) 32.768 kHz Crystal Oscillator Error Interrupt Disable Position */
+#define PMC_IDR_EXT32KERR_Msk                 (_U_(0x1) << PMC_IDR_EXT32KERR_Pos)                  /**< (PMC_IDR) 32.768 kHz Crystal Oscillator Error Interrupt Disable Mask */
+#define PMC_IDR_EXT32KERR(value)              (PMC_IDR_EXT32KERR_Msk & ((value) << PMC_IDR_EXT32KERR_Pos))
 #define PMC_IDR_CPUMON_Pos                    _U_(23)                                              /**< (PMC_IDR) CPU Clock Monitor Interrupt Disable Position */
 #define PMC_IDR_CPUMON_Msk                    (_U_(0x1) << PMC_IDR_CPUMON_Pos)                     /**< (PMC_IDR) CPU Clock Monitor Interrupt Disable Mask */
 #define PMC_IDR_CPUMON(value)                 (PMC_IDR_CPUMON_Msk & ((value) << PMC_IDR_CPUMON_Pos))
-#define PMC_IDR_Msk                           _U_(0x00A77F0F)                                      /**< (PMC_IDR) Register Mask  */
+#define PMC_IDR_Msk                           _U_(0x00A70F0F)                                      /**< (PMC_IDR) Register Mask  */
 
 #define PMC_IDR_PCKRDY_Pos                    _U_(8)                                               /**< (PMC_IDR Position) Programmable Clock Ready x Interrupt Disable */
-#define PMC_IDR_PCKRDY_Msk                    (_U_(0x7F) << PMC_IDR_PCKRDY_Pos)                    /**< (PMC_IDR Mask) PCKRDY */
+#define PMC_IDR_PCKRDY_Msk                    (_U_(0xF) << PMC_IDR_PCKRDY_Pos)                     /**< (PMC_IDR Mask) PCKRDY */
 #define PMC_IDR_PCKRDY(value)                 (PMC_IDR_PCKRDY_Msk & ((value) << PMC_IDR_PCKRDY_Pos)) 
 
 /* -------- PMC_SR : (PMC Offset: 0x68) ( R/ 32) Status Register -------- */
@@ -409,15 +394,6 @@
 #define PMC_SR_PCKRDY3_Pos                    _U_(11)                                              /**< (PMC_SR) Programmable Clock Ready Status Position */
 #define PMC_SR_PCKRDY3_Msk                    (_U_(0x1) << PMC_SR_PCKRDY3_Pos)                     /**< (PMC_SR) Programmable Clock Ready Status Mask */
 #define PMC_SR_PCKRDY3(value)                 (PMC_SR_PCKRDY3_Msk & ((value) << PMC_SR_PCKRDY3_Pos))
-#define PMC_SR_PCKRDY4_Pos                    _U_(12)                                              /**< (PMC_SR) Programmable Clock Ready Status Position */
-#define PMC_SR_PCKRDY4_Msk                    (_U_(0x1) << PMC_SR_PCKRDY4_Pos)                     /**< (PMC_SR) Programmable Clock Ready Status Mask */
-#define PMC_SR_PCKRDY4(value)                 (PMC_SR_PCKRDY4_Msk & ((value) << PMC_SR_PCKRDY4_Pos))
-#define PMC_SR_PCKRDY5_Pos                    _U_(13)                                              /**< (PMC_SR) Programmable Clock Ready Status Position */
-#define PMC_SR_PCKRDY5_Msk                    (_U_(0x1) << PMC_SR_PCKRDY5_Pos)                     /**< (PMC_SR) Programmable Clock Ready Status Mask */
-#define PMC_SR_PCKRDY5(value)                 (PMC_SR_PCKRDY5_Msk & ((value) << PMC_SR_PCKRDY5_Pos))
-#define PMC_SR_PCKRDY6_Pos                    _U_(14)                                              /**< (PMC_SR) Programmable Clock Ready Status Position */
-#define PMC_SR_PCKRDY6_Msk                    (_U_(0x1) << PMC_SR_PCKRDY6_Pos)                     /**< (PMC_SR) Programmable Clock Ready Status Mask */
-#define PMC_SR_PCKRDY6(value)                 (PMC_SR_PCKRDY6_Msk & ((value) << PMC_SR_PCKRDY6_Pos))
 #define PMC_SR_MOSCSELS_Pos                   _U_(16)                                              /**< (PMC_SR) Main Clock Source Oscillator Selection Status Position */
 #define PMC_SR_MOSCSELS_Msk                   (_U_(0x1) << PMC_SR_MOSCSELS_Pos)                    /**< (PMC_SR) Main Clock Source Oscillator Selection Status Mask */
 #define PMC_SR_MOSCSELS(value)                (PMC_SR_MOSCSELS_Msk & ((value) << PMC_SR_MOSCSELS_Pos))
@@ -433,16 +409,16 @@
 #define PMC_SR_FOS_Pos                        _U_(20)                                              /**< (PMC_SR) Clock Failure Detector Fault Output Status Position */
 #define PMC_SR_FOS_Msk                        (_U_(0x1) << PMC_SR_FOS_Pos)                         /**< (PMC_SR) Clock Failure Detector Fault Output Status Mask */
 #define PMC_SR_FOS(value)                     (PMC_SR_FOS_Msk & ((value) << PMC_SR_FOS_Pos))      
-#define PMC_SR_XT32KERR_Pos                   _U_(21)                                              /**< (PMC_SR) Slow Crystal Oscillator Error Position */
-#define PMC_SR_XT32KERR_Msk                   (_U_(0x1) << PMC_SR_XT32KERR_Pos)                    /**< (PMC_SR) Slow Crystal Oscillator Error Mask */
-#define PMC_SR_XT32KERR(value)                (PMC_SR_XT32KERR_Msk & ((value) << PMC_SR_XT32KERR_Pos))
+#define PMC_SR_EXT32KERR_Pos                  _U_(21)                                              /**< (PMC_SR) Slow Crystal Oscillator Error Position */
+#define PMC_SR_EXT32KERR_Msk                  (_U_(0x1) << PMC_SR_EXT32KERR_Pos)                   /**< (PMC_SR) Slow Crystal Oscillator Error Mask */
+#define PMC_SR_EXT32KERR(value)               (PMC_SR_EXT32KERR_Msk & ((value) << PMC_SR_EXT32KERR_Pos))
 #define PMC_SR_CPUMON_Pos                     _U_(23)                                              /**< (PMC_SR) CPU Clock Monitor Error Position */
 #define PMC_SR_CPUMON_Msk                     (_U_(0x1) << PMC_SR_CPUMON_Pos)                      /**< (PMC_SR) CPU Clock Monitor Error Mask */
 #define PMC_SR_CPUMON(value)                  (PMC_SR_CPUMON_Msk & ((value) << PMC_SR_CPUMON_Pos))
-#define PMC_SR_Msk                            _U_(0x00BF7F8F)                                      /**< (PMC_SR) Register Mask  */
+#define PMC_SR_Msk                            _U_(0x00BF0F8F)                                      /**< (PMC_SR) Register Mask  */
 
 #define PMC_SR_PCKRDY_Pos                     _U_(8)                                               /**< (PMC_SR Position) Programmable Clock Ready Status */
-#define PMC_SR_PCKRDY_Msk                     (_U_(0x7F) << PMC_SR_PCKRDY_Pos)                     /**< (PMC_SR Mask) PCKRDY */
+#define PMC_SR_PCKRDY_Msk                     (_U_(0xF) << PMC_SR_PCKRDY_Pos)                      /**< (PMC_SR Mask) PCKRDY */
 #define PMC_SR_PCKRDY(value)                  (PMC_SR_PCKRDY_Msk & ((value) << PMC_SR_PCKRDY_Pos)) 
 
 /* -------- PMC_IMR : (PMC Offset: 0x6C) ( R/ 32) Interrupt Mask Register -------- */
@@ -470,15 +446,6 @@
 #define PMC_IMR_PCKRDY3_Pos                   _U_(11)                                              /**< (PMC_IMR) Programmable Clock Ready 3 Interrupt Mask Position */
 #define PMC_IMR_PCKRDY3_Msk                   (_U_(0x1) << PMC_IMR_PCKRDY3_Pos)                    /**< (PMC_IMR) Programmable Clock Ready 3 Interrupt Mask Mask */
 #define PMC_IMR_PCKRDY3(value)                (PMC_IMR_PCKRDY3_Msk & ((value) << PMC_IMR_PCKRDY3_Pos))
-#define PMC_IMR_PCKRDY4_Pos                   _U_(12)                                              /**< (PMC_IMR) Programmable Clock Ready 4 Interrupt Mask Position */
-#define PMC_IMR_PCKRDY4_Msk                   (_U_(0x1) << PMC_IMR_PCKRDY4_Pos)                    /**< (PMC_IMR) Programmable Clock Ready 4 Interrupt Mask Mask */
-#define PMC_IMR_PCKRDY4(value)                (PMC_IMR_PCKRDY4_Msk & ((value) << PMC_IMR_PCKRDY4_Pos))
-#define PMC_IMR_PCKRDY5_Pos                   _U_(13)                                              /**< (PMC_IMR) Programmable Clock Ready 5 Interrupt Mask Position */
-#define PMC_IMR_PCKRDY5_Msk                   (_U_(0x1) << PMC_IMR_PCKRDY5_Pos)                    /**< (PMC_IMR) Programmable Clock Ready 5 Interrupt Mask Mask */
-#define PMC_IMR_PCKRDY5(value)                (PMC_IMR_PCKRDY5_Msk & ((value) << PMC_IMR_PCKRDY5_Pos))
-#define PMC_IMR_PCKRDY6_Pos                   _U_(14)                                              /**< (PMC_IMR) Programmable Clock Ready 6 Interrupt Mask Position */
-#define PMC_IMR_PCKRDY6_Msk                   (_U_(0x1) << PMC_IMR_PCKRDY6_Pos)                    /**< (PMC_IMR) Programmable Clock Ready 6 Interrupt Mask Mask */
-#define PMC_IMR_PCKRDY6(value)                (PMC_IMR_PCKRDY6_Msk & ((value) << PMC_IMR_PCKRDY6_Pos))
 #define PMC_IMR_MOSCSELS_Pos                  _U_(16)                                              /**< (PMC_IMR) Main Clock Source Oscillator Selection Status Interrupt Mask Position */
 #define PMC_IMR_MOSCSELS_Msk                  (_U_(0x1) << PMC_IMR_MOSCSELS_Pos)                   /**< (PMC_IMR) Main Clock Source Oscillator Selection Status Interrupt Mask Mask */
 #define PMC_IMR_MOSCSELS(value)               (PMC_IMR_MOSCSELS_Msk & ((value) << PMC_IMR_MOSCSELS_Pos))
@@ -488,16 +455,16 @@
 #define PMC_IMR_CFDEV_Pos                     _U_(18)                                              /**< (PMC_IMR) Clock Failure Detector Event Interrupt Mask Position */
 #define PMC_IMR_CFDEV_Msk                     (_U_(0x1) << PMC_IMR_CFDEV_Pos)                      /**< (PMC_IMR) Clock Failure Detector Event Interrupt Mask Mask */
 #define PMC_IMR_CFDEV(value)                  (PMC_IMR_CFDEV_Msk & ((value) << PMC_IMR_CFDEV_Pos))
-#define PMC_IMR_XT32KERR_Pos                  _U_(21)                                              /**< (PMC_IMR) 32.768 kHz Crystal Oscillator Error Interrupt Mask Position */
-#define PMC_IMR_XT32KERR_Msk                  (_U_(0x1) << PMC_IMR_XT32KERR_Pos)                   /**< (PMC_IMR) 32.768 kHz Crystal Oscillator Error Interrupt Mask Mask */
-#define PMC_IMR_XT32KERR(value)               (PMC_IMR_XT32KERR_Msk & ((value) << PMC_IMR_XT32KERR_Pos))
+#define PMC_IMR_EXT32KERR_Pos                 _U_(21)                                              /**< (PMC_IMR) 32.768 kHz Crystal Oscillator Error Interrupt Mask Position */
+#define PMC_IMR_EXT32KERR_Msk                 (_U_(0x1) << PMC_IMR_EXT32KERR_Pos)                  /**< (PMC_IMR) 32.768 kHz Crystal Oscillator Error Interrupt Mask Mask */
+#define PMC_IMR_EXT32KERR(value)              (PMC_IMR_EXT32KERR_Msk & ((value) << PMC_IMR_EXT32KERR_Pos))
 #define PMC_IMR_CPUMON_Pos                    _U_(23)                                              /**< (PMC_IMR) CPU Clock Monitor Error Interrupt Mask Position */
 #define PMC_IMR_CPUMON_Msk                    (_U_(0x1) << PMC_IMR_CPUMON_Pos)                     /**< (PMC_IMR) CPU Clock Monitor Error Interrupt Mask Mask */
 #define PMC_IMR_CPUMON(value)                 (PMC_IMR_CPUMON_Msk & ((value) << PMC_IMR_CPUMON_Pos))
-#define PMC_IMR_Msk                           _U_(0x00A77F0F)                                      /**< (PMC_IMR) Register Mask  */
+#define PMC_IMR_Msk                           _U_(0x00A70F0F)                                      /**< (PMC_IMR) Register Mask  */
 
 #define PMC_IMR_PCKRDY_Pos                    _U_(8)                                               /**< (PMC_IMR Position) Programmable Clock Ready x Interrupt Mask */
-#define PMC_IMR_PCKRDY_Msk                    (_U_(0x7F) << PMC_IMR_PCKRDY_Pos)                    /**< (PMC_IMR Mask) PCKRDY */
+#define PMC_IMR_PCKRDY_Msk                    (_U_(0xF) << PMC_IMR_PCKRDY_Pos)                     /**< (PMC_IMR Mask) PCKRDY */
 #define PMC_IMR_PCKRDY(value)                 (PMC_IMR_PCKRDY_Msk & ((value) << PMC_IMR_PCKRDY_Pos)) 
 
 /* -------- PMC_FOCR : (PMC Offset: 0x78) ( /W 32) Fault Output Clear Register -------- */
@@ -649,15 +616,15 @@
 #define PMC_OCR1_SEL8_Pos                     _U_(15)                                              /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 8 MHz Position */
 #define PMC_OCR1_SEL8_Msk                     (_U_(0x1) << PMC_OCR1_SEL8_Pos)                      /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 8 MHz Mask */
 #define PMC_OCR1_SEL8(value)                  (PMC_OCR1_SEL8_Msk & ((value) << PMC_OCR1_SEL8_Pos))
-#define PMC_OCR1_CAL10_Pos                    _U_(16)                                              /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 10 MHz Position */
-#define PMC_OCR1_CAL10_Msk                    (_U_(0x7F) << PMC_OCR1_CAL10_Pos)                    /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 10 MHz Mask */
-#define PMC_OCR1_CAL10(value)                 (PMC_OCR1_CAL10_Msk & ((value) << PMC_OCR1_CAL10_Pos))
+#define PMC_OCR1_CAL12_Pos                    _U_(16)                                              /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 12 MHz Position */
+#define PMC_OCR1_CAL12_Msk                    (_U_(0x7F) << PMC_OCR1_CAL12_Pos)                    /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 12 MHz Mask */
+#define PMC_OCR1_CAL12(value)                 (PMC_OCR1_CAL12_Msk & ((value) << PMC_OCR1_CAL12_Pos))
 #define PMC_OCR1_SEL10_Pos                    _U_(23)                                              /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 10 MHz Position */
 #define PMC_OCR1_SEL10_Msk                    (_U_(0x1) << PMC_OCR1_SEL10_Pos)                     /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 10 MHz Mask */
 #define PMC_OCR1_SEL10(value)                 (PMC_OCR1_SEL10_Msk & ((value) << PMC_OCR1_SEL10_Pos))
-#define PMC_OCR1_CAL12_Pos                    _U_(24)                                              /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 12 MHz Position */
-#define PMC_OCR1_CAL12_Msk                    (_U_(0x7F) << PMC_OCR1_CAL12_Pos)                    /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 12 MHz Mask */
-#define PMC_OCR1_CAL12(value)                 (PMC_OCR1_CAL12_Msk & ((value) << PMC_OCR1_CAL12_Pos))
+#define PMC_OCR1_CAL10_Pos                    _U_(24)                                              /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 10 MHz Position */
+#define PMC_OCR1_CAL10_Msk                    (_U_(0x7F) << PMC_OCR1_CAL10_Pos)                    /**< (PMC_OCR1) Main RC Oscillator Calibration Bits for 10 MHz Mask */
+#define PMC_OCR1_CAL10(value)                 (PMC_OCR1_CAL10_Msk & ((value) << PMC_OCR1_CAL10_Pos))
 #define PMC_OCR1_SEL12_Pos                    _U_(31)                                              /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 12 MHz Position */
 #define PMC_OCR1_SEL12_Msk                    (_U_(0x1) << PMC_OCR1_SEL12_Pos)                     /**< (PMC_OCR1) Selection of Main RC Oscillator Calibration Bits for 12 MHz Mask */
 #define PMC_OCR1_SEL12(value)                 (PMC_OCR1_SEL12_Msk & ((value) << PMC_OCR1_SEL12_Pos))
@@ -1550,18 +1517,18 @@
 #define PMC_OCR2_SEL8_Pos                     _U_(15)                                              /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 8 MHz Position */
 #define PMC_OCR2_SEL8_Msk                     (_U_(0x1) << PMC_OCR2_SEL8_Pos)                      /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 8 MHz Mask */
 #define PMC_OCR2_SEL8(value)                  (PMC_OCR2_SEL8_Msk & ((value) << PMC_OCR2_SEL8_Pos))
-#define PMC_OCR2_CAL10_Pos                    _U_(16)                                              /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 10 MHz Position */
-#define PMC_OCR2_CAL10_Msk                    (_U_(0x7F) << PMC_OCR2_CAL10_Pos)                    /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 10 MHz Mask */
-#define PMC_OCR2_CAL10(value)                 (PMC_OCR2_CAL10_Msk & ((value) << PMC_OCR2_CAL10_Pos))
-#define PMC_OCR2_SEL10_Pos                    _U_(23)                                              /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 10 MHz Position */
-#define PMC_OCR2_SEL10_Msk                    (_U_(0x1) << PMC_OCR2_SEL10_Pos)                     /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 10 MHz Mask */
-#define PMC_OCR2_SEL10(value)                 (PMC_OCR2_SEL10_Msk & ((value) << PMC_OCR2_SEL10_Pos))
-#define PMC_OCR2_CAL12_Pos                    _U_(24)                                              /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 12 MHz Position */
+#define PMC_OCR2_CAL12_Pos                    _U_(16)                                              /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 12 MHz Position */
 #define PMC_OCR2_CAL12_Msk                    (_U_(0x7F) << PMC_OCR2_CAL12_Pos)                    /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 12 MHz Mask */
 #define PMC_OCR2_CAL12(value)                 (PMC_OCR2_CAL12_Msk & ((value) << PMC_OCR2_CAL12_Pos))
-#define PMC_OCR2_SEL12_Pos                    _U_(31)                                              /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 12 MHz Position */
+#define PMC_OCR2_SEL12_Pos                    _U_(23)                                              /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 12 MHz Position */
 #define PMC_OCR2_SEL12_Msk                    (_U_(0x1) << PMC_OCR2_SEL12_Pos)                     /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 12 MHz Mask */
 #define PMC_OCR2_SEL12(value)                 (PMC_OCR2_SEL12_Msk & ((value) << PMC_OCR2_SEL12_Pos))
+#define PMC_OCR2_CAL10_Pos                    _U_(24)                                              /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 10 MHz Position */
+#define PMC_OCR2_CAL10_Msk                    (_U_(0x7F) << PMC_OCR2_CAL10_Pos)                    /**< (PMC_OCR2) Main RC Oscillator Calibration Bits for 10 MHz Mask */
+#define PMC_OCR2_CAL10(value)                 (PMC_OCR2_CAL10_Msk & ((value) << PMC_OCR2_CAL10_Pos))
+#define PMC_OCR2_SEL10_Pos                    _U_(31)                                              /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 10 MHz Position */
+#define PMC_OCR2_SEL10_Msk                    (_U_(0x1) << PMC_OCR2_SEL10_Pos)                     /**< (PMC_OCR2) Selection of Main RC Oscillator Calibration Bits for 10 MHz Mask */
+#define PMC_OCR2_SEL10(value)                 (PMC_OCR2_SEL10_Msk & ((value) << PMC_OCR2_SEL10_Pos))
 #define PMC_OCR2_Msk                          _U_(0xFFFFFFFF)                                      /**< (PMC_OCR2) Register Mask  */
 
 
@@ -1575,6 +1542,10 @@
 #define CKGR_PLLBR_REG_OFST            (0x2C)              /**< (CKGR_PLLBR) PLLB Register Offset */
 #define PMC_MCKR_REG_OFST              (0x30)              /**< (PMC_MCKR) Master Clock Register Offset */
 #define PMC_PCK_REG_OFST               (0x40)              /**< (PMC_PCK) Programmable Clock Register Offset */
+#define PMC_PCK0_REG_OFST              (0x40)              /**< (PMC_PCK0) Programmable Clock Register Offset */
+#define PMC_PCK1_REG_OFST              (0x44)              /**< (PMC_PCK1) Programmable Clock Register Offset */
+#define PMC_PCK2_REG_OFST              (0x48)              /**< (PMC_PCK2) Programmable Clock Register Offset */
+#define PMC_PCK3_REG_OFST              (0x4C)              /**< (PMC_PCK3) Programmable Clock Register Offset */
 #define PMC_IER_REG_OFST               (0x60)              /**< (PMC_IER) Interrupt Enable Register Offset */
 #define PMC_IDR_REG_OFST               (0x64)              /**< (PMC_IDR) Interrupt Disable Register Offset */
 #define PMC_SR_REG_OFST                (0x68)              /**< (PMC_SR) Status Register Offset */

@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -78,10 +78,10 @@ communications whether written or oral.                                     */
 /*  Description:    Contains chain functions                                */
 /*                                                                          */
 /* ************************************************************************ */
-#include "DirectC/dpuser.h"
-#include "DirectC/JTAG/dpchain.h"
-#include "DirectC/JTAG/dpjtag.h"
-#include "DirectC/dpcom.h"
+#include "dpuser.h"
+#include "dpchain.h"
+#include "dpjtag.h"
+#include "dpcom.h"
 
 #ifdef CHAIN_SUPPORT
 /* *****************************************************************************

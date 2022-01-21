@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -207,64 +207,110 @@ communications whether written or oral.
 #define G5M_UEK2_EXISTS_BYTE_LENGTH			1u
 #define G5M_DPK_EXISTS_OFFSET				67u
 #define G5M_DPK_EXISTS_BYTE_LENGTH			1u
+#define G5M_SEC_ERASE_EXISTS_OFFSET			67u
+#define G5M_SEC_ERASE_EXISTS_BYTE_LENGTH	1u
+#define G5M_UEK3_EXISTS_OFFSET				68u
+#define G5M_UEK3_EXISTS_BYTE_LENGTH			1u
+#define G5M_DEVICE_EXCEPTION_OFFSET		    69u
+#define G5M_DEVICE_EXCEPTION_BYTE_LENGTH	1u
 
-#define G5M_FAMILY_ID_IN_DAT				   0x7u
+
+#define G5M_FAMILY_ID_IN_DAT                0x7u
+#define G5M_FAMILY_MASK                     0x0FFF0000u
+#define G5M_FAMILY                          0x0F810000u
+
+#define MPF300T_ES_DEVICE_CODE  10
+#define MPF300TS_ES_DEVICE_CODE 11
+#define MPF300XT_DEVICE_CODE    12
+#define MPF300T_DEVICE_CODE     13
+#define MPF300TS_DEVICE_CODE    14
+#define MPF300TL_DEVICE_CODE    15
+#define MPF300TLS_DEVICE_CODE   16
+
+#define G5M_MAX_PROGRAM_ATTEMPTS   3
+#define G5M_MAX_VERIFY_ATTEMPTS    3
+
+#define G5M_MAX_ALLOWED_PROGRAMMING_CYCLES  500
 
 /*
 * G5Main JTAG instructions
 */
 #define G5M_ISC_ENABLE					0x0bu
 #define G5M_ISC_DISABLE					0x0cu
-#define G5M_ISC_NOOP					   0x0du
+#define G5M_ISC_NOOP					0x0du
 #define G5M_FRAME_INIT					0xaeu
 #define G5M_READ_DESIGN_INFO			0xa6u
-#define G5M_READ_DEBUG_INFO			0xe7u
+#define G5M_READ_DIGEST                 0xa3u
+#define G5M_READ_DEBUG_INFO			    0xe7u
 #define G5M_TVS_MONITOR					0xe3u
 #define G5M_READ_BUFFER					0xf2u
-#define G5M_READ_FSN					   0xf0u
+#define G5M_READ_FSN					0xf0u
 #define G5M_QUERY_SECURITY				0xb8u
-#define G5M_MODE						   0xafu
+#define G5M_MODE						0xafu
 #define G5M_FRAME_DATA					0xeeu
 #define G5M_FRAME_STATUS				0xd8u
-#define G5M_KEYLO						   0xebu
-#define G5M_KEYHI						   0xecu
-#define G5M_AUXLO						   0xe9u
-#define G5M_AUXHI						   0xeau
-#define G5M_UNLOCK_DEBUG_PASSCODE	0xadu
+#define G5M_KEYLO						0xebu
+#define G5M_KEYHI						0xecu
+#define G5M_AUXLO						0xe9u
+#define G5M_AUXHI						0xeau
+#define G5M_UNLOCK_DEBUG_PASSCODE	    0xa9u
 #define G5M_UNLOCK_USER_PASSCODE		0xa8u
-#define G5M_UNLOCK_VENDOR_PASSCODE	0xaau
+#define G5M_UNLOCK_VENDOR_PASSCODE	    0xaau
 #define G5M_MSSADDR						0xdbu
-#define G5M_MSSRD						   0xbdu
-#define G5M_MSSWR						   0xceu
+#define G5M_MSSRD						0xbdu
+#define G5M_MSSWR						0xceu
 #define G5M_READ_DEVICE_CERT			0xa2u
 #define G5M_GENERATE_OTP				0xf3u
 #define G5M_MATCH_OTP					0xedu
 #define G5M_VALIDATE_KEYS				0xacu
 #define G5M_CHECK_DIGESTS				0xbcu
+#define G5M_EXTEST2                     0x09u
+#define G5M_UDV                         0xcdu
+#define G5M_READ_DEVICE_INTEGRITY       0xe1u
+#define G5M_ZEROIZE                     0xe6u
+#define G5M_READ_ZEROIZATION_RESULT     0xe2u
 
-#define	G5M_MAX_CONTROLLER_POLL			1000000u
+
+#define	G5M_MAX_CONTROLLER_POLL	    1000000u
+#define	G5M_MAX_EXIT_POLL			10000u
 
 #define ISC_STATUS_REGISTER_BIT_LENGTH	32u
 #define G5M_DATA_STATUS_REGISTER_BIT_LENGTH 64u
 #define G5M_STANDARD_CYCLES				3u
 #define G5M_STANDARD_DELAY				10u
+#define G5M_EXTEST2_DELAY				1000u
+#define G5M_EXIT_POLL_DELAY				1000u
 #define G5M_MSSADDR_BIT_LENGTH			64u
 #define G5M_MSSRD_BIT_LENGTH			16u
 #define G5M_MSSWR_BIT_LENGTH			32u
+
+#define G5M_IO_CALIBRATION_DELAY                1000000u
 
 #define G5M_STATUS_REGISTER_BIT_LENGTH				8u
 #define G5M_SECURITY_STATUS_REGISTER_BIT_LENGTH		16u
 #define G5M_FRAME_BIT_LENGTH						128u
 #define G5M_FRAME_STATUS_BIT_LENGTH					129u
 #define G5M_FRAME_BYTE_LENGTH						16u
+#define G5M_COMPONENT_DIGEST_BYTE_SIZE              32u
+#define G5M_NUMBER_OF_COFC_BLOCKS                   8u // which is 928 / 128 rounded up
+#define G5M_GEN_CERT_BYTE                           340u // Bit 1 (0x2u)
+#define G5M_COMPONENT_TYPE_IN_HEADER_BYTE           50u
+#define G5M_OWP_KEY_MODE                            51u
 
-#define G5M_FPGA						1u
-#define G5M_KEYS						2u
-#define G5M_ENVM						3u
+#define G5M_COMP_BITS                   0u
+#define G5M_COMP_FPGA                   1u    
+#define G5M_COMP_KEYS                   2u
+#define G5M_COMP_SNVM                   3u
+#define G5M_COMP_ENVM                   6u      // G5SOC
+#define G5M_COMP_OWP                    7u      // G5SOC
+#define G5M_COMP_EOB                    127u
 
 #define G5M_UL_USER_KEY1				0x2u
 #define G5M_UL_USER_KEY2				0x4u
 #define G5M_UL_EXTERNAL_DIGEST_CHECK	0x4u
+
+#define G5M_BSDIGEST_BYTE_OFFSET        308u
+#define G5M_BSDIGEST_BYTE_SIZE          32u
 
 
 DPUCHAR dp_top_g5 (void);
@@ -276,22 +322,32 @@ void dp_perform_G5_action(void);
 void dp_G5M_device_info_action(void);
 void dp_G5M_erase_action(void);
 void dp_G5M_program_action(void);
+void dp_G5M_reprogram_inflight_action(void);
 void dp_G5M_verify_action(void);
 void dp_G5M_enc_data_authentication_action(void);
 void dp_G5M_verify_digest_action(void);
+void dp_G5M_read_device_certificate_action(void);
+void dp_G5M_zeroize_like_new_action(void);
+void dp_G5M_zeroize_unrecoverable_action(void);
 
 void dp_check_G5_device_ID (void);
-void dp_G5M_read_version_code(void);
+void dp_G5M_do_program(void);
+void dp_G5M_do_verify(void);
+void dp_G5M_read_udv(void);
 void dp_G5M_read_design_info(void);
+void dp_G5M_read_digests(void);
 
 void dp_G5M_poll_device_ready(void);
 void dp_G5M_check_core_status(void);
+void dp_G5M_display_core_status(void);
 void dp_G5M_read_debug_info(void);
+void dp_G5M_dump_debug_info(void);
 void dp_G5M_read_tvs_monitor(void);
 void dp_G5M_read_fsn(void);
 void dp_G5M_read_security(void);
 void dp_G5M_query_security(void);
 void dp_G5M_dump_security(void);
+void dp_G5M_read_dibs(void);
 void dp_G5M_unlock_dpk(void);
 void dp_G5M_unlock_upk1(void);
 void dp_G5M_unlock_upk2(void);
@@ -304,14 +360,21 @@ void dp_G5M_load_bsr(void);
 void dp_G5M_perform_isc_enable(void);
 void dp_G5M_process_data(DPUCHAR BlockID);
 void dp_G5M_get_data_status(void);
-
+void dp_G5M_report_certificate(void);
+void dp_G5M_read_certificate(void);
+void dp_G5M_display_bitstream_digest(void);
+void dp_G5M_do_zeroize(DPUCHAR zmode);
+void dp_G5M_do_read_zeroization_result(void);
+void dp_G5M_check_cycle_count(void);
 
 /* Initialization functions */
 void dp_G5M_device_poll(DPUCHAR bits_to_shift, DPUCHAR Busy_bit);
 void dp_G5M_device_shift_and_poll(DPUCHAR bits_to_shift, DPUCHAR Busy_bit,DPUCHAR Variable_ID,DPULONG start_bit_index);
 void dp_G5M_initialize(void);
 void dp_G5M_exit(void);
+void dp_G5M_poll_device_ready_during_exit(void);
 void dp_G5M_set_mode(void);
+void dp_G5M_clear_errors(void);
 
 /* Erase function */
 void dp_G5M_erase(void);

@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -154,15 +154,20 @@ communications whether written or oral.                                     */
 #define G4M_MSSWR						0xceu
 #define G4M_CHECK_DIGESTS				0xbcu
 #define G4M_READ_DIGESTS				0xa3u
+#define G4M_EXTEST2                     0x09u
+#define G4M_READ_DEVICE_CERT            0xa2u
+#define G4M_DPC                         0xdau
 
 #define	G4M_MAX_CONTROLLER_POLL			1000000u
 
 #define ISC_STATUS_REGISTER_BIT_LENGTH	32u
 #define G4M_STANDARD_CYCLES				3u
 #define G4M_STANDARD_DELAY				10u
+#define G4M_EXTEST2_DELAY				1000u
 #define G4M_MSSADDR_BIT_LENGTH			64u
 #define G4M_MSSRD_BIT_LENGTH			16u
 #define G4M_MSSWR_BIT_LENGTH			32u
+#define G4M_DPC_REGISTER_BIT_LENGTH     64u
 
 #define G4M_STATUS_REGISTER_BIT_LENGTH				8u
 #define G4M_SECURITY_STATUS_REGISTER_BIT_LENGTH		16u
@@ -170,14 +175,28 @@ communications whether written or oral.                                     */
 #define G4M_FRAME_STATUS_BIT_LENGTH					129u
 #define G4M_FRAME_BYTE_LENGTH						16u
 
-#define M2S090_ID						0x0F8071CFu
-#define M2S150_ID						0x0F8061CFu
+#define M2S005_ID                       0x0F8051CFu
+#define M2S010_ID                       0x0F8031CFu
+#define M2S025_ID                       0x0F8041CFu
+#define M2S050_ID                       0x0F8021CFu
+#define M2S060_ID                       0x0F8081CFu
+#define M2S090_ID                       0x0F8071CFu
+#define M2S150_ID                       0x0F8061CFu
+#define OLD_FORMAT_CERTIFICATE_SIZE     656u
+#define NEW_FORMAT_CERTIFICATE_SIZE     912u
+
 
 #define COMPONENT_TYPE_IN_HEADER_BYTE	48u
+#define CERTIFICATE_SUPPORT_BYTE_OFFSET 340u
 #define ENVM_MODULE_ID_IN_HEADER_BYTE	301u
+#define G4M_BSDIGEST_BYTE_OFFSET        308u
+#define G4M_BSDIGEST_BYTE_SIZE          32u
+#define G4M_BITS						0u
 #define G4M_FPGA						1u
 #define G4M_KEYS						2u
 #define G4M_ENVM						3u
+#define G4M_EOB 						127u
+
 
 DPUCHAR dp_top_g4 (void);
 void dp_init_G4_vars(void);
@@ -191,16 +210,19 @@ void dp_G4M_program_action(void);
 void dp_G4M_verify_action(void);
 void dp_G4M_enc_data_authentication_action(void);
 void dp_G4M_verify_digest_action(void);
+void dp_G4M_read_device_certificate_action(void);
 
 void dp_check_G4_device_ID (void);
 void dp_G4M_poll_device_ready(void);
 void dp_G4M_check_core_status(void);
+void dp_G4M_display_core_status(void);
 void dp_G4M_read_design_info(void);
 void dp_G4M_read_prog_info(void);
 void dp_G4M_read_fsn(void);
 void dp_G4M_read_bitstream_digest(void);
 void dp_G4M_read_security(void);
 void dp_G4M_query_security(void);
+void dp_G4M_dump_security_info(void);
 void dp_G4M_unlock_dpk(void);
 void dp_G4M_load_dpk(void);
 void dp_G4M_unlock_upk1(void);
@@ -221,7 +243,11 @@ void dp_MSS_ADDR_CONFIG(void);
 void dp_MSS_RD_DATA_SETUP(void);
 void dp_MSS_WR_DATA_SETUP(void);
 void dp_MSS_WR_DATA(void);
-
+void dp_G4M_read_certificate(void);
+void dp_G4M_report_certificate(void);
+void dp_G4M_set_dpc(void);
+void dp_G4M_reset_dpc(void);
+void dp_G4M_display_bitstream_digest(void);
 
 /* Initialization functions */
 void dp_G4M_device_poll(DPUCHAR bits_to_shift, DPUCHAR Busy_bit);

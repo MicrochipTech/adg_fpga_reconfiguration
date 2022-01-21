@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -82,7 +82,7 @@ communications whether written or oral.                                     */
 
 #ifndef INC_DPUTIL_H
 #define INC_DPUTIL_H
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 
 /****************************************************************************/
 /* External common global variables                                         */
@@ -111,7 +111,8 @@ void dp_check_and_get_image_size(void);
 
 #ifdef ENABLE_DISPLAY
 int int_to_hex_int(int value, unsigned char * p_result, int result_size);
-int int_to_dec_int(int value, unsigned char * p_result, int result_size);
+int int_to_dec_int(int value, unsigned char * p_result);
+int int_to_chr_int(int value, unsigned char * p_result);
 #endif
 #endif /* INC_DPUTIL_H */
 

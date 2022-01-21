@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -84,18 +84,28 @@ communications whether written or oral.                                     */
 /* Programming method.  Common to all families */
 #define DIRECTC_PROGRAMMING					2u
 
+#define MAX_BSR_BYTE_SIZE                   2048u
+#define MAX_BSR_BIT_SIZE                    16384u
+
 extern DPUCHAR Action_code;
 extern DPUCHAR Action_done; 
 extern DPUCHAR opcode;
 extern DPULONG device_ID;
 extern DPUCHAR device_rev;
 extern DPUCHAR device_family;
+extern DPUCHAR device_exception;
 extern DPULONG DataIndex;
 extern DPUCHAR error_code;
+extern DPUINT unique_exit_code;
+extern DPUCHAR bsr_buffer[MAX_BSR_BYTE_SIZE];
+extern DPUCHAR bsr_sample_buffer[MAX_BSR_BYTE_SIZE];
+
 #ifdef ENABLE_DISPLAY
 extern DPULONG old_progress;
 extern DPULONG new_progress;
 #endif
+
+extern DPUCHAR core_is_enabled;
 
 
 
@@ -152,6 +162,11 @@ extern DPULONG new_progress;
 #define DP_CHECK_BITSTREAM_ACTION_CODE			27u
 #define DP_VERIFY_DIGEST_ACTION_CODE			28u
 #define DP_VALIDATE_USER_ENC_KEYS_ACTION_CODE	29u
+#define DP_READ_DEVICE_CERTIFICATE_ACTION_CODE	30u
+#define DP_ZEROIZE_LIKE_NEW_ACTION_CODE         31u
+#define DP_ZEROIZE_UNRECOVERABLE_ACTION_CODE    32u
+#define DP_REPROGRAM_INFLIGHT_ACTION_CODE       33u
+
 
 /************************************************************/
 /* Error code definitions                                   */
@@ -224,6 +239,7 @@ extern DPULONG new_progress;
 #define G4_FAMILY       0x5u
 #define RTG4_FAMILY     0x6u
 #define G5_FAMILY		0x7u
+#define G5SOC_FAMILY	0x8u
 
 DPUCHAR dp_top(void);
 void dp_read_idcode(void);

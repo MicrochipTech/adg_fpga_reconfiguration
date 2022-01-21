@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -107,6 +107,18 @@ communications whether written or oral.                                     */
 #define RTG4M_CHECKSUM_BYTE_LENGTH			2u
 #define RTG4M_NUMOFBSRBITS_OFFSET			51u
 #define RTG4M_NUMOFBSRBITS_BYTE_LENGTH		2u
+#define RTG4M_DEVICE_EXCEPTION_OFFSET		53u
+#define RTG4M_DEVICE_EXCEPTION_BYTE_LENGTH	1u
+
+#define RT4G150_ES_DEVICE_CODE  20
+#define RT4G150_DEVICE_CODE     21
+
+#define RT4G_MAX_PROGRAM_ATTEMPTS   3
+#define RT4G_MAX_VERIFY_ATTEMPTS    3
+
+#define RTG4M_MAX_ALLOWED_PROGRAMMING_CYCLES    200
+
+
 /*
 * RTG4Main JTAG instructions
 */
@@ -122,12 +134,15 @@ communications whether written or oral.                                     */
 #define RTG4M_FRAME_STATUS				0xc9u
 #define RTG4M_VERIFY_DIGEST				0xdcu
 #define RTG4M_READ_DIGEST				0xdbu
+#define RTG4M_DEBUG_INFO                0xf3u
+#define RTG4M_EXTEST2                   0x09u
 
 #define	RTG4M_MAX_CONTROLLER_POLL			1000000u
 
 #define RTG4_ISC_STATUS_REGISTER_BIT_LENGTH	32u
 #define RTG4M_STANDARD_CYCLES				3u
 #define RTG4M_STANDARD_DELAY				10u
+#define RTG4M_EXTEST2_DELAY					1000u
 #define RTG4M_RESET_CYCLES					5u
 #define RTG4M_RESET_DELAY					1000u
 
@@ -146,13 +161,17 @@ void dp_perform_RTG4_action (void);
 void dp_RTG4M_device_info_action(void);
 void dp_RTG4M_erase_action(void);
 void dp_RTG4M_program_action(void);
+void dp_RTG4M_reprogram_inflight_action(void);
 void dp_RTG4M_verify_action(void);
 void dp_RTG4M_check_bitstream_action(void);
 void dp_RTG4M_verify_digest_action(void);
 //
 void dp_check_RTG4_device_ID (void);
+void dp_RTG4M_do_program(void);
+void dp_RTG4M_do_verify(void);
 void dp_RTG4M_poll_device_ready(void);
 void dp_RTG4M_check_core_status(void);
+void dp_RTG4M_display_core_status(void);
 void dp_RTG4M_read_design_info(void);
 void dp_RTG4M_read_prog_info(void);
 void dp_RTG4M_read_dsn(void);
@@ -163,12 +182,15 @@ void dp_RTG4M_load_bsr(void);
 void dp_RTG4M_perform_isc_enable(void);
 void dp_RTG4M_process_data(DPUCHAR BlockID);
 void dp_RTG4M_get_data_status(void);
+void dp_RTG4M_read_debug_info(void);
+void dp_RTG4M_check_cycle_count(void);
 
 /* Initialization functions */
 void dp_RTG4M_device_poll(DPUCHAR bits_to_shift, DPUCHAR Busy_bit);
 void dp_RTG4M_initialize(void);
 void dp_RTG4M_exit(void);
 void dp_RTG4M_set_mode(void);
+void dp_RTG4M_clear_errors(void);
 
 
 #endif /* INC_DPRTG4ALG_H */

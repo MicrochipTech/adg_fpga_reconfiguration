@@ -62,13 +62,13 @@ files:
   security: NON_SECURE
   type: SOURCE
   userChecksum: 9E153A6D4F8E0EA1F6901BAED7DD80FD
-- generatedChecksum: DF4D18E6499BD1B38EF30F374944A9CA
+- generatedChecksum: DE82A870B03F0595B4173BBE0F636E97
   logicalPath: config/sam_rh71_ek
   name: initialization.c
   physicalPath: ''
   security: NON_SECURE
   type: SOURCE
-  userChecksum: DF4D18E6499BD1B38EF30F374944A9CA
+  userChecksum: DE82A870B03F0595B4173BBE0F636E97
 - generatedChecksum: B3AF97C58F334BB15D86A7A783DC8804
   logicalPath: config/sam_rh71_ek
   name: interrupts.c
@@ -209,13 +209,13 @@ files:
   security: NON_SECURE
   type: SOURCE
   userChecksum: 3DB7CABF2C0D9DADCD06760D15BF4779
-- generatedChecksum: 242AB4750DD93D594211EB73A9E3892B
+- generatedChecksum: 7806B30ECAE0D18D08CD583D8775530D
   logicalPath: config/sam_rh71_ek/stdio
   name: xc32_monitor.c
   physicalPath: stdio
   security: NON_SECURE
   type: SOURCE
-  userChecksum: 242AB4750DD93D594211EB73A9E3892B
+  userChecksum: 7806B30ECAE0D18D08CD583D8775530D
 - generatedChecksum: null
   logicalPath: ''
   name: app.h
@@ -314,13 +314,13 @@ files:
   security: NON_SECURE
   type: HEADER
   userChecksum: 948CEA542F04017255B040816F368DF8
-- generatedChecksum: 58764D6934C04B4C5B8886460D1F17FF
+- generatedChecksum: D8B862A3A4690ED24E43E0CEEB2CF145
   logicalPath: config/sam_rh71_ek
   name: definitions.h
   physicalPath: ''
   security: NON_SECURE
   type: HEADER
-  userChecksum: 58764D6934C04B4C5B8886460D1F17FF
+  userChecksum: D8B862A3A4690ED24E43E0CEEB2CF145
 - generatedChecksum: 7929223E6187D4E61737AA5CBF04F60C
   logicalPath: config/sam_rh71_ek
   name: device.h

@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,17 +79,17 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 #ifdef ENABLE_G3_SUPPORT
 
-#include "DirectC/dputil.h"
-#include "DirectC/dpalg.h"
-#include "DirectC/G3Algo/dpG3alg.h"
-#include "DirectC/G3Algo/dpcore.h"
-#include "DirectC/G3Algo/dpnvm.h"
-#include "DirectC/G3Algo/dpsecurity.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/JTAG/dpjtag.h"
+#include "dputil.h"
+#include "dpalg.h"
+#include "dpG3alg.h"
+#include "dpcore.h"
+#include "dpnvm.h"
+#include "dpsecurity.h"
+#include "dpcom.h"
+#include "dpjtag.h"
 
 DPUINT cycle_count;
 #ifdef CORE_SUPPORT

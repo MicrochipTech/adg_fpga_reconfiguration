@@ -397,18 +397,10 @@ void APP_Tasks ( void )
 #endif
             if (appData.directcState == APP_DIRECTC_STATE_INIT)
             {
-                Action_code = DP_PROGRAM_ACTION_CODE;
+                Action_code = DP_REPROGRAM_INFLIGHT_ACTION_CODE;
                 appData.directcState = APP_DIRECTC_STATE_PROGRAM;
                 appData.state = APP_DIRECTC_TOP;
             }
-#ifdef USE_VERIFY
-            else if (appData.directcState == APP_DIRECTC_STATE_PROGRAM)
-            {
-                Action_code = DP_VERIFY_ACTION_CODE;
-                appData.directcState = APP_DIRECTC_STATE_VERIFY;
-                appData.state = APP_DIRECTC_TOP;
-            }
-#endif
             else
             {
                 appData.state = APP_WAIT_PUSH_BUTTON;

@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -78,15 +78,15 @@ communications whether written or oral.                                     */
 /*  Description:    Contains initialization and data checking functions.    */
 /*                                                                          */
 /* ************************************************************************ */
-#include "DirectC/dpuser.h"
-#include "DirectC/dputil.h"
-#include "DirectC/dpalg.h"
-#include "DirectC/G3Algo/dpG3alg.h"
-#include "G4Algo/dpG4alg.h"
-#include "G5Algo/dpG5alg.h"
-#include "RTG4algo/dpRTG4alg.h"
-#include "DirectC/JTAG/dpjtag.h"
-#include "DirectC/dpcom.h"
+#include "dpuser.h"
+#include "dputil.h"
+#include "dpalg.h"
+#include "dpG3alg.h"
+#include "dpG4alg.h"
+#include "dpG5alg.h"
+#include "dpRTG4alg.h"
+#include "dpjtag.h"
+#include "dpcom.h"
 
 DPUCHAR Action_code; /* used to hold the action codes as defined in dpalg.h */
 DPUCHAR Action_done; /* used to hold the action codes as defined in dpalg.h */
@@ -95,12 +95,15 @@ DPUCHAR opcode; /* Holds the opcode value of the IR register prior to loading */
 DPULONG device_ID;  /* Holds the device ID */
 DPUCHAR device_rev; /* Holds the device revision */
 DPUCHAR device_family = 0U;    /* Read from the data file AFS, or G3 */
+DPUCHAR device_exception = 0u;
 
 #ifdef ENABLE_DISPLAY
 DPULONG old_progress = 0;
 DPULONG new_progress;
 #endif
 
+DPUCHAR bsr_buffer[MAX_BSR_BYTE_SIZE];
+DPUCHAR bsr_sample_buffer[MAX_BSR_BYTE_SIZE];
 
 #ifdef ENABLE_G3_SUPPORT
 DPUINT device_bsr_bit_length; /* Holds the bit length of the BSR register */
@@ -115,19 +118,20 @@ DPULONG DataIndex;
 * functions 
 */
 DPUCHAR error_code; 
+DPUINT unique_exit_code;
+DPUCHAR core_is_enabled = 0xffu;
 
 DPUCHAR dp_top (void)
 {
     #ifdef ENABLE_DISPLAY
     dp_display_text((DPCHAR*)"\r\nIdentifying device...");
     #endif
-    
     error_code = DPE_SUCCESS;
     dp_init_com_vars();
     /* This function call is exit Avionics mode on RTG4 */
     dp_exit_avionics_mode();
     dp_check_and_get_image_size();
-
+    
     if (error_code == DPE_SUCCESS)
     {
         goto_jtag_state(JTAG_TEST_LOGIC_RESET,0u);
@@ -146,7 +150,7 @@ DPUCHAR dp_top (void)
         {
             dp_top_g3();
             Action_done = TRUE;
-        }
+        }	
         #endif
         
         #ifdef ENABLE_G4_SUPPORT
@@ -192,7 +196,7 @@ DPUCHAR dp_top (void)
             error_code = DPE_SUCCESS;
             dp_read_idcode();            
             dp_check_G5_device_ID();
-            if ((error_code == DPE_SUCCESS) && (device_family == G5_FAMILY))
+            if ((error_code == DPE_SUCCESS) && ((device_family == G5_FAMILY) || (device_family == G5SOC_FAMILY)))
             {
                 dp_top_g5 ();
                 Action_done = TRUE;

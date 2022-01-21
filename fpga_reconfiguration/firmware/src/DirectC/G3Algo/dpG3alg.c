@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,18 +79,18 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 #ifdef ENABLE_G3_SUPPORT
 
-#include "DirectC/dputil.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/dpalg.h"
-#include "DirectC/G3Algo/dpG3alg.h"
-#include "DirectC/G3Algo/dpcore.h"
-#include "DirectC/G3Algo/dpfrom.h"
-#include "DirectC/G3Algo/dpnvm.h"
-#include "DirectC/G3Algo/dpsecurity.h"
-#include "DirectC/JTAG/dpjtag.h"
+#include "dputil.h"
+#include "dpcom.h"
+#include "dpalg.h"
+#include "dpG3alg.h"
+#include "dpcore.h"
+#include "dpfrom.h"
+#include "dpnvm.h"
+#include "dpsecurity.h"
+#include "dpjtag.h"
 
 #ifdef ENABLE_IAP_SUPPORT
 #include "urow_iap.h"
@@ -110,7 +110,6 @@ DPUCHAR AES_mode_value; /* Holds the value of the AES mode for dual key devices 
 /* Device exception is to test for 015 vs 030 devices. 
 *  The value is read out from the data file
 */
-DPUCHAR device_exception; 
 DPUINT device_rows;		/* Device specific number of rows  */
 DPUCHAR device_SD;		/* Device specific number of SD tiles */
 

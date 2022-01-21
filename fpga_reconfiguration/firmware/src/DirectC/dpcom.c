@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,16 +79,9 @@ communications whether written or oral.                                     */
 /*  pointers passing of the various data blocks needed.                     */
 /*                                                                          */
 /* ************************************************************************ */
-#include "DirectC/dpuser.h"
-#include "DirectC/dpcom.h"
+#include "dpuser.h"
+#include "dpcom.h"
 
-/* User defined */
-#ifdef ENABLE_DISPLAY
-#ifdef ENABLE_EMBEDDED_SUPPORT
-#include "definitions.h"                // SYS function prototypes
-#endif
-#endif
-/* End of User defined */
 /*
 * Paging System Specific Implementation.  User attention required:
 */
@@ -191,11 +184,6 @@ DPUCHAR* dp_get_header_data(DPULONG bit_index)
 #ifdef USE_PAGING
 void dp_get_page_data(DPULONG image_requested_address)
 {
-    //dp_display_text((DPCHAR*)"\r\nGPD : "); 
-    //dp_display_value(((DPULONG)image_requested_address), DEC);
-    //dp_display_text((DPCHAR*)", s= "); 
-    //dp_display_value(((DPULONG)image_size), DEC);
-
     #ifdef ENABLE_EMBEDDED_SUPPORT
     return_bytes = PAGE_BUFFER_SIZE;
     /* Image size will initially be the header size which is part of the image file.
@@ -214,8 +202,6 @@ void dp_get_page_data(DPULONG image_requested_address)
     *  Add a funciton call here to get the page data from the external storage device.
     */
     
-    /* User defined */
-    /* End of User defined */
     #endif
     return;
 }

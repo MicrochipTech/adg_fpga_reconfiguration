@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -106,20 +106,9 @@ due to single event upsets (SEUs) in radiation environment.
 *  of the data file setting. */
 /* #define BSR_SAMPLE */
 
-/* User defined */
-#ifdef ENABLE_EMBEDDED_SUPPORT
-#endif
-/* End of User defined */
 /*************** End of compiler switches ***********************************/
 
 
-/* User defined */
-#ifdef ENABLE_EMBEDDED_SUPPORT
-#ifdef ENABLE_DISPLAY
-// TODO
-
-#endif
-/* End of User defined */
 
 /*************** Hardware related constants *****************************/
 /*
@@ -164,8 +153,6 @@ typedef   signed long  DPLONG;
 #define GPIO_SEL 1u
 #define IAP_SEL 2u
 
-/* User defined */
-/* End of User defined */
 
 extern DPUCHAR *image_buffer;
 extern DPUCHAR hardware_interface;
@@ -176,18 +163,15 @@ void dp_exit_avionics_mode(void);
 void dp_delay(DPULONG microseconds);
 
 #ifdef ENABLE_EMBEDDED_SUPPORT
+DPUCHAR jtag_inp(void);
+void jtag_outp(DPUCHAR outdata);
 void dp_jtag_init(void);
 void dp_jtag_tms(DPUCHAR tms);
 void dp_jtag_tms_tdi(DPUCHAR tms, DPUCHAR tdi);
 DPUCHAR dp_jtag_tms_tdi_tdo(DPUCHAR tms, DPUCHAR tdi);
-/* User defined */
-
-/* End of User defined */
 #endif
 
 
-/* User defined */
-/* End of User defined */
 
 #ifdef ENABLE_DISPLAY
 #define HEX 0u
@@ -200,9 +184,9 @@ DPUCHAR dp_jtag_tms_tdi_tdo(DPUCHAR tms, DPUCHAR tdi);
 void dp_display_text(DPCHAR *text);
 void dp_display_value(DPULONG value,DPUINT descriptive);
 void dp_display_array(DPUCHAR *value,DPUINT bytes, DPUINT descriptive);
+void dp_display_array_reverse(DPUCHAR *outbuf,DPUINT bytes, DPUINT descriptive);
 void dp_report_progress(DPUCHAR value);
-
-#endif
+#define PRINT_DELAY 250
 
 #endif /* INC_DPUSER_H */
 

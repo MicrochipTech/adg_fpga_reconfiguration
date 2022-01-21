@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,19 +79,31 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 #ifdef ENABLE_RTG4_SUPPORT
-#include "DirectC/dputil.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/dpalg.h"
+#include "dputil.h"
+#include "dpcom.h"
+#include "dpalg.h"
 #include "dpRTG4alg.h"
-#include "DirectC/JTAG/dpjtag.h"
+#include "dpjtag.h"
 
 DPUCHAR rtg4_pgmmode;
 DPUCHAR rtg4_pgmmode_flag;
 DPUCHAR rtg4_shared_buf[688]; // Maximum of 768
 DPUCHAR rtg4_poll_buf[17];
 DPULONG rtg4_poll_index;
+
+DPUINT  rtg4_prev_failed_component = 0;
+DPULONG rtg4_prev_failed_block = 0;
+DPUINT  rtg4_prev_unique_error_code = 0;
+DPUCHAR rtg4_prev_error_code = 0;
+DPUCHAR rtg4_prev_bserror_code = 0;
+
+DPUINT  rtg4_current_failed_component = 0;
+DPULONG rtg4_current_failed_block = 0;
+DPUINT  rtg4_current_unique_error_code = 0;
+DPUCHAR rtg4_current_error_code = 0;
+DPUCHAR rtg4_current_bserror_code = 0;
 
 
 /****************************************************************************
@@ -123,8 +135,6 @@ void dp_RTG4_exit_avionics_mode(void)
 {
     /* In order to exit avioncs mode, trstb must be held high and then either power cycle the device 
     or toggle devrst pin */
-    /* User defined */
-    /* End of User defined */
     return;
 }
 
@@ -140,6 +150,7 @@ void dp_check_RTG4_action(void)
     else if (! (
     (Action_code == DP_ERASE_ACTION_CODE) ||
     (Action_code == DP_PROGRAM_ACTION_CODE) ||
+    (Action_code == DP_REPROGRAM_INFLIGHT_ACTION_CODE) ||
     (Action_code == DP_VERIFY_ACTION_CODE) ||
     (Action_code == DP_CHECK_BITSTREAM_ACTION_CODE) ||
     (Action_code == DP_VERIFY_DIGEST_ACTION_CODE)
@@ -183,6 +194,9 @@ void dp_perform_RTG4_action (void)
                     case DP_PROGRAM_ACTION_CODE: 
                     dp_RTG4M_program_action();
                     break;
+                    case DP_REPROGRAM_INFLIGHT_ACTION_CODE:
+                    dp_RTG4M_reprogram_inflight_action();
+                    break;
                     case DP_VERIFY_ACTION_CODE: 
                     dp_RTG4M_verify_action();
                     break;
@@ -203,6 +217,10 @@ void dp_perform_RTG4_action (void)
 
 void dp_RTG4M_erase_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming erase action: ");
+    #endif  
+    
     dp_RTG4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -224,39 +242,168 @@ void dp_RTG4M_erase_action(void)
     return;
 }
 
+void dp_RTG4M_reprogram_inflight_action(void)
+{
+    DPUCHAR done = 0u;
+    DPUINT pgm_attempts = 0;
+    DPUINT vfy_attempts = 0;
+    
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming Reprogram_inFlight action: ");
+    #endif  
+    
+    dp_RTG4M_clear_errors();
+    
+    dp_RTG4M_initialize();
+    if (error_code == DPE_SUCCESS)
+    {
+        while ((!done) && (pgm_attempts < RT4G_MAX_PROGRAM_ATTEMPTS))
+        {
+            error_code = DPE_SUCCESS;
+            vfy_attempts = 0;
+            pgm_attempts++;
+            dp_RTG4M_do_program();
+            if (error_code != DPE_SUCCESS)
+            {
+                // If the previous programming run failed on the same location, abort
+                if (
+                (rtg4_current_failed_component == rtg4_prev_failed_component) &&
+                (rtg4_current_failed_block == rtg4_prev_failed_block) &&
+                (rtg4_current_error_code == rtg4_prev_error_code) &&
+                (rtg4_current_bserror_code == rtg4_prev_bserror_code) &&
+                (rtg4_current_unique_error_code == rtg4_prev_unique_error_code)
+                )
+                {
+                    break;
+                }
+                else // Otherwise, save the error and try again
+                {
+                    rtg4_prev_failed_component = rtg4_current_failed_component;
+                    rtg4_prev_failed_block = rtg4_current_failed_block;
+                    rtg4_prev_error_code = rtg4_current_error_code;
+                    rtg4_prev_bserror_code = rtg4_current_bserror_code;
+                    rtg4_prev_unique_error_code = rtg4_current_unique_error_code;
+                }
+            }
+            else
+            {
+                dp_RTG4M_clear_errors();
+                
+                while ((!done) && (vfy_attempts < RT4G_MAX_VERIFY_ATTEMPTS))
+                {
+                    error_code = DPE_SUCCESS;                  
+                    vfy_attempts++;
+                    dp_RTG4M_do_verify();
+                    if (error_code == DPE_SUCCESS)
+                    {
+                        done = 1u;
+                    }
+                    else if ( // If the error is the same as the previous error, abort.  It will attempt to reprogram
+                    (rtg4_current_failed_component == rtg4_prev_failed_component) &&
+                    (rtg4_current_failed_block == rtg4_prev_failed_block) &&
+                    (rtg4_current_error_code == rtg4_prev_error_code) &&
+                    (rtg4_current_bserror_code == rtg4_prev_bserror_code) &&
+                    (rtg4_current_unique_error_code == rtg4_prev_unique_error_code)
+                    )
+                    {
+                        dp_RTG4M_clear_errors();
+                        break;
+                    }
+                    else
+                    { // Otherwise, save the errors and try verify again.
+                        rtg4_prev_failed_component = rtg4_current_failed_component;
+                        rtg4_prev_failed_block = rtg4_current_failed_block;
+                        rtg4_prev_error_code = rtg4_current_error_code;
+                        rtg4_prev_bserror_code = rtg4_current_bserror_code;
+                        rtg4_prev_unique_error_code = rtg4_current_unique_error_code;
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
+
+void dp_RTG4M_clear_errors(void)
+{
+    rtg4_prev_failed_component = 0;
+    rtg4_current_failed_component = 0;
+    rtg4_prev_failed_block = 0;
+    rtg4_current_failed_block = 0;
+    rtg4_prev_error_code = 0; 
+    rtg4_current_error_code = 0;
+    rtg4_prev_bserror_code = 0;
+    rtg4_current_bserror_code = 0;
+    rtg4_prev_unique_error_code = 0;
+    rtg4_current_unique_error_code = 0 ;
+    
+    return;
+}
+
 void dp_RTG4M_program_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming program action: ");
+    #endif  
+    
     dp_RTG4M_initialize();
     
     if (error_code == DPE_SUCCESS)
     {
-        rtg4_pgmmode = 0x1u;
-        dp_RTG4M_set_mode();
+        dp_RTG4M_do_program();
     }
-    if (error_code == DPE_SUCCESS)
-    {
-        
-        global_uint2 = 1u;
-        dp_RTG4M_process_data(RTG4M_datastream_ID);
-        if(error_code != DPE_SUCCESS)
-        {
-            error_code = DPE_CORE_PROGRAM_ERROR;
-        }
-        
-    }
-    
     return;
 }
+
+void dp_RTG4M_do_program(void)
+{
+    dp_RTG4M_check_cycle_count();
+    if (error_code == DPE_SUCCESS)
+    {
+        #ifdef ENABLE_DISPLAY  
+        dp_display_text((DPCHAR*)"\r\nPerforming stand alone program...");
+        #endif
+        rtg4_pgmmode = 0x1u;
+        dp_RTG4M_set_mode();
+        
+        if (error_code == DPE_SUCCESS)
+        {
+            
+            global_uint2 = 1u;
+            dp_RTG4M_process_data(RTG4M_datastream_ID);
+            if(error_code != DPE_SUCCESS)
+            {
+                error_code = DPE_CORE_PROGRAM_ERROR;
+            }
+            
+        }
+    }
+    return;
+}
+
 
 void dp_RTG4M_verify_action(void)
 {
-    dp_RTG4M_initialize();
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming verify action: ");
+    #endif  
     
+    dp_RTG4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
-        rtg4_pgmmode = 0x2u;
-        dp_RTG4M_set_mode();
+        dp_RTG4M_do_verify();
     }
+    
+    return;
+}
+
+void dp_RTG4M_do_verify(void)
+{
+    #ifdef ENABLE_DISPLAY    
+    dp_display_text((DPCHAR*)"\r\nPerforming stand alone verify...");
+    #endif
+    rtg4_pgmmode = 0x2u;
+    dp_RTG4M_set_mode();
     if (error_code == DPE_SUCCESS)
     {
         
@@ -267,12 +414,16 @@ void dp_RTG4M_verify_action(void)
             error_code = DPE_CORE_PROGRAM_ERROR;
         }
     }
-    
     return;
 }
 
+
 void dp_RTG4M_check_bitstream_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming check bitstream action: ");
+    #endif  
+    
     dp_RTG4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -295,6 +446,10 @@ void dp_RTG4M_check_bitstream_action(void)
 
 void dp_RTG4M_verify_digest_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming verify digest action: ");
+    #endif  
+    
     dp_RTG4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -311,21 +466,33 @@ void dp_RTG4M_verify_digest_action(void)
         
         opcode = RTG4M_VERIFY_DIGEST;
         dp_RTG4M_device_poll(64u, 63u);
-        if (error_code == DPE_SUCCESS)
+        if (error_code != DPE_SUCCESS)
+        {
+            error_code = DPE_VERIFY_DIGEST_ERROR;
+            unique_exit_code = 32777;
+            #ifdef ENABLE_DISPLAY
+            dp_display_text((DPCHAR*)"\r\nFailed to verify digest: Instruction timed out.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
+            #endif
+        }
+        else
         {
             if (( rtg4_poll_buf[1] & 0x40u) == 0x40u)
             {
+                unique_exit_code = 32777;
+                error_code = DPE_VERIFY_DIGEST_ERROR;
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nFPGA array digest check is disabled.");
                 #endif
-                error_code = DPE_VERIFY_DIGEST_ERROR;
             }
             else if (( rtg4_poll_buf[1] & 0x80u) == 0x80u)
             {
+                unique_exit_code = 32776;
+                error_code = DPE_VERIFY_DIGEST_ERROR;
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nDevice is blank.");
                 #endif
-                error_code = DPE_VERIFY_DIGEST_ERROR;
             }
             else
             {
@@ -344,6 +511,7 @@ void dp_RTG4M_verify_digest_action(void)
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nFPGA Fabric digest verification: FAIL.");
                     #endif
+                    unique_exit_code = 32779;
                     error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
                 if (( rtg4_poll_buf[0] & 0x4u) == 0x0u)
@@ -351,8 +519,16 @@ void dp_RTG4M_verify_digest_action(void)
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nFactory row segment digest verification: FAIL.");
                     #endif
+                    unique_exit_code = 32780;
                     error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
+                #ifdef ENABLE_DISPLAY
+                if (unique_exit_code != DPE_SUCCESS)
+                {
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                    dp_display_value(unique_exit_code, HEX);
+                }
+                #endif
             }
         }
     }
@@ -366,22 +542,40 @@ void dp_RTG4M_check_core_status(void)
     IRSCAN_out(&global_uchar1);
     goto_jtag_state(JTAG_RUN_TEST_IDLE,1u);
     
-    #ifdef ENABLE_DISPLAY
     if ((global_uchar1 & 0x4u) == 0x4u)
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+        core_is_enabled = 1;
     }
     else
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+        core_is_enabled = 0;
     }
-    #endif
     
     return;
 }
 
 
 #ifdef ENABLE_DISPLAY
+void dp_RTG4M_display_core_status(void)
+{
+    #ifdef ENABLE_DISPLAY
+    if (core_is_enabled == 1)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+    }
+    else if (core_is_enabled == 0)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+    }
+    else
+    {
+        dp_display_text((DPCHAR*)"\r\nWarning: CoreEnable bit is not inspected.");
+    }
+    #endif
+    
+    return;
+}
+
 void dp_RTG4M_device_info_action(void)
 {
     dp_RTG4M_initialize();
@@ -397,6 +591,7 @@ void dp_RTG4M_device_info_action(void)
     
     
     dp_RTG4M_check_core_status();
+    dp_RTG4M_display_core_status();
     dp_RTG4M_read_design_info();
     dp_RTG4M_read_prog_info();
     dp_RTG4M_query_security();
@@ -491,11 +686,19 @@ void dp_RTG4M_read_dsn(void)
     goto_jtag_state(JTAG_RUN_TEST_IDLE,RTG4M_STANDARD_CYCLES);
     opcode = RTG4M_READ_DSN;
     dp_RTG4M_device_poll(129u, 128u);
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    dp_display_text((DPCHAR*)"\r\nDSN: ");
-    dp_display_array(rtg4_poll_buf, 16u, HEX);
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    
+    if ((error_code == DPE_POLL_ERROR) && (unique_exit_code == DPE_SUCCESS))
+    {
+        unique_exit_code = 32769;
+        dp_display_text((DPCHAR*)"\r\nFailed to read DSN.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+    }
+    else
+    {
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+        dp_display_text((DPCHAR*)"\r\nDSN: ");
+        dp_display_array(rtg4_poll_buf, 16u, HEX);
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+    }
     return;
 }
 
@@ -543,6 +746,7 @@ void dp_check_RTG4_device_ID (void)
     DataIndex = dp_get_bytes(Header_ID,RTG4M_ID_OFFSET,RTG4M_ID_BYTE_LENGTH);
     
     global_ulong1 = dp_get_bytes(Header_ID,RTG4M_ID_MASK_OFFSET,4U);
+    device_exception = (DPUCHAR)dp_get_bytes(Header_ID,RTG4M_DEVICE_EXCEPTION_OFFSET, RTG4M_DEVICE_EXCEPTION_BYTE_LENGTH);
     
     device_ID &= global_ulong1;
     DataIndex &= global_ulong1;
@@ -553,23 +757,51 @@ void dp_check_RTG4_device_ID (void)
     {
         if (device_ID == DataIndex )
         {
-            #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nActID = ");
-            dp_display_value(device_ID,HEX);
-            dp_display_text((DPCHAR*)" ExpID = ");
-            dp_display_value(DataIndex,HEX);
-            dp_display_text((DPCHAR*)"\r\nDevice Rev = ");
-            dp_display_value(device_rev,HEX);
-            #endif
-            device_family = (DPUCHAR) dp_get_bytes(Header_ID,RTG4M_DEVICE_FAMILY_OFFSET,RTG4M_DEVICE_FAMILY_BYTE_LENGTH);
+            if ( (device_exception == RT4G150_ES_DEVICE_CODE) && (device_rev > 1u))
+            {
+                unique_exit_code = 32773;
+                error_code = DPE_IDCODE_ERROR;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nFailed to verify IDCODE");
+                dp_display_text((DPCHAR*)"\r\nRT4G150_ES DAT file is not compatible with RT4G150 production devices.");
+                dp_display_text((DPCHAR*)"\r\nYou must use a DAT file for RT4G150 device."); 
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
+                #endif
+            }
+            else if ( (device_exception == RT4G150_DEVICE_CODE) && (device_rev < 2u))
+            {
+                unique_exit_code = 32774;
+                error_code = DPE_IDCODE_ERROR;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nFailed to verify IDCODE\r\nRT4G150 DAT file is not compatible with RT4G150_ES devices.\r\nYou must use a DAT file for RT4G150_ES device."); 
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
+                #endif
+            }
+            else
+            {
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nActID = ");
+                dp_display_value(device_ID,HEX);
+                dp_display_text((DPCHAR*)" ExpID = ");
+                dp_display_value(DataIndex,HEX);
+                dp_display_text((DPCHAR*)"\r\nDevice Rev = ");
+                dp_display_value(device_rev,HEX);
+                #endif
+                device_family = (DPUCHAR) dp_get_bytes(Header_ID,RTG4M_DEVICE_FAMILY_OFFSET,RTG4M_DEVICE_FAMILY_BYTE_LENGTH);
+            }
         }
         else
         {
+            error_code = DPE_IDCODE_ERROR;
+            unique_exit_code = 32772;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)" ExpID = ");
             dp_display_value(DataIndex,HEX);
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_IDCODE_ERROR;
         }
     }
     else
@@ -646,10 +878,13 @@ void dp_RTG4M_poll_device_ready(void)
     }
     if(rtg4_poll_index > RTG4M_MAX_CONTROLLER_POLL)
     {
+        error_code = DPE_POLL_ERROR;  
+        unique_exit_code = 32770;
         #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nDevice polling failed.");
+        dp_display_text((DPCHAR*)"\r\nDevice is busy.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
         #endif
-        error_code = DPE_POLL_ERROR;
     }
     
     return;
@@ -661,47 +896,72 @@ void dp_RTG4M_poll_device_ready(void)
 ****************************************************************************/
 void dp_RTG4M_load_bsr(void)
 {
+    DPUCHAR capture_last_known_io_state = 0;
+    DPUINT index;
+    DPUCHAR mask;
+    DPUCHAR c_mask;
+    DPUINT bsr_bits;
     
-    global_uint1 = (DPUINT) dp_get_bytes(RTG4M_Header_ID,RTG4M_NUMOFBSRBITS_OFFSET,RTG4M_NUMOFBSRBITS_BYTE_LENGTH);
+    dp_RTG4M_check_core_status();
     
+    bsr_bits = (DPUINT) dp_get_bytes(RTG4M_Header_ID,RTG4M_NUMOFBSRBITS_OFFSET,RTG4M_NUMOFBSRBITS_BYTE_LENGTH);
     opcode = ISC_SAMPLE;
     IRSCAN_in();
     
-    #ifdef BSR_SAMPLE
-    /* Capturing the last known state of the IOs is only valid if the core
-    was programmed.  Otherwise, load the BSR with what is in the data file. */
-    if ((global_uchar1 & 0x4u) != 0x4u)
-    {
-        dp_get_bytes(RTG4M_BsrPattern_ID,0u,1u);
-        if (return_bytes)
-        {
-            #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nWarning: FPGA array is not programmed. Loading BSR register...");
-            #endif
-            dp_get_and_DRSCAN_in(RTG4M_BsrPattern_ID, global_uint1, 0u);
-            goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-        }
-    }
-    else 
-    {
-        #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nMaintaining last known IO states...");
-        #endif
-        goto_jtag_state(JTAG_CAPTURE_DR,0u);
-        goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-    }
-    #else
-    dp_get_bytes(RTG4M_BsrPattern_ID,0u,1u);
+    mask = dp_get_bytes(RTG4M_BsrPattern_ID,0u,1u);
     if (return_bytes)
     {
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nLoading BSR...");
         #endif
-        dp_get_and_DRSCAN_in(RTG4M_BsrPattern_ID, global_uint1, 0u);
+        dp_get_and_DRSCAN_in(RTG4M_BsrPattern_ID, bsr_bits, 0u);
         goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
     }
-    #endif
     
+    
+    /* Capturing the last known state of the IOs is only valid if the core
+    was programmed.  Otherwise, load the BSR with what is in the data file. */
+    if (core_is_enabled == 1)
+    {
+        for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+        {
+            if (dp_get_bytes(RTG4M_BsrPatternMask_ID,index,1u) != 0)
+            {
+                capture_last_known_io_state = 1;
+                break;
+            }
+        }
+        if (capture_last_known_io_state)
+        {
+            if (bsr_bits > MAX_BSR_BIT_SIZE)
+            {
+                #ifdef ENABLE_DISPLAY              
+                dp_display_text((DPCHAR*)"\r\nError: number of bsr bits > max buffer size.\r\nSkipping maintain last known state of the IOs...");
+                #endif
+            }
+            else 
+            {
+                DRSCAN_out(bsr_bits, (DPUCHAR*)DPNULL, bsr_sample_buffer);
+                
+                for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+                {
+                    bsr_buffer[index] = dp_get_bytes(RTG4M_BsrPattern_ID,index,1u);
+                    mask = dp_get_bytes(RTG4M_BsrPatternMask_ID,index,1u);
+                    
+                    if (mask != 0u)
+                    {
+                        c_mask = ~mask;
+                        bsr_buffer[index] = (bsr_buffer[index] & c_mask) | (bsr_sample_buffer[index] & mask);
+                    }
+                }
+                
+                opcode = ISC_SAMPLE;
+                IRSCAN_in();
+                DRSCAN_in(0, bsr_bits, bsr_buffer);
+                goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
+            }
+        }
+    }
     
     return;
 }
@@ -723,10 +983,13 @@ void dp_RTG4M_perform_isc_enable(void)
     
     if ( (error_code != DPE_SUCCESS) || ((rtg4_poll_buf[0] & 0x1u) == 1u)	)
     {
+        error_code = DPE_INIT_FAILURE;
+        unique_exit_code = 32771;
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nFailed to enter programming mode.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
         #endif
-        error_code = DPE_INIT_FAILURE;
     }
     
     #ifdef ENABLE_DISPLAY
@@ -758,7 +1021,7 @@ void dp_RTG4M_perform_isc_enable(void)
         dp_display_text((DPCHAR*)"\r\nTEMPRANGE: HOT");
     }
     dp_display_text((DPCHAR*)"\r\nTEMP: ");
-    dp_display_value(rtg4_poll_buf[1],DEC);
+    dp_display_value(rtg4_poll_buf[1],HEX);
     #endif
     
     
@@ -785,7 +1048,6 @@ void dp_RTG4M_initialize(void)
 /* Function is used to exit programming mode */
 void dp_RTG4M_exit(void)
 {
-    
     if (rtg4_pgmmode_flag == TRUE)
     {
         #ifdef ENABLE_DISPLAY
@@ -800,12 +1062,17 @@ void dp_RTG4M_exit(void)
         opcode = ISC_DISABLE;
         dp_RTG4M_device_poll(32u, 31u);
         #ifdef ENABLE_DISPLAY
-        if (error_code != DPE_SUCCESS)
+        if ((error_code == DPE_POLL_ERROR) && (unique_exit_code == DPE_SUCCESS))
         {
             dp_display_text((DPCHAR*)"\r\nFailed to disable programming mode.");
         }
         #endif
     }
+    
+    opcode = RTG4M_EXTEST2;
+    IRSCAN_in();
+    goto_jtag_state(JTAG_RUN_TEST_IDLE, RTG4M_STANDARD_CYCLES);
+    dp_delay(RTG4M_EXTEST2_DELAY);
     
     opcode = RTG4M_JTAG_RELEASE;
     IRSCAN_in();
@@ -895,33 +1162,112 @@ void dp_RTG4M_process_data(DPUCHAR BlockID)
         
         if (error_code != DPE_SUCCESS)
         {
+            if (Action_code == DP_PROGRAM_ACTION_CODE)
+            {
+                unique_exit_code = 32788;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"Failed to program device: Instruction timed out." );
+                #endif
+            }
+            else if (Action_code == DP_VERIFY_ACTION_CODE)
+            {
+                unique_exit_code = 32787;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"Failed to verify device: Instruction timed out." );
+                #endif
+            }
+            else if (Action_code == DP_ERASE_ACTION_CODE)
+            {
+                unique_exit_code = 32786;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"Failed to erase device: Instruction timed out." );
+                #endif
+            }
+            else if (Action_code == DP_CHECK_BITSTREAM_ACTION_CODE)
+            {
+                unique_exit_code = 32785;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"Failed to check bitstream: Instruction timed out." );
+                #endif
+            }
             #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
             dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
             dp_display_value(global_uint2, DEC);
             dp_display_text((DPCHAR*)"\r\nblockNo: ");
             dp_display_value(global_ulong2, DEC);
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
             #endif
+            
+            rtg4_current_failed_component = global_uint2;
+            rtg4_current_failed_block = global_ulong2;
+            rtg4_current_unique_error_code = unique_exit_code;
+            
             error_code = DPE_PROCESS_DATA_ERROR;
             break;
         }
-        else 
+        else if(rtg4_poll_buf[0] & 0x18)
         {
             dp_RTG4M_get_data_status();
             if (error_code != DPE_SUCCESS)
             {
                 #ifdef ENABLE_DISPLAY
-                dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
+                dp_display_text((DPCHAR*)"\r\nData Status Instruction timed out.");
                 dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
                 dp_display_value(global_uint2, DEC);
                 dp_display_text((DPCHAR*)"\r\nblockNo: ");
                 dp_display_value(global_ulong2, DEC);
                 #endif
+                rtg4_current_failed_component = global_uint2;
+                rtg4_current_failed_block = global_ulong2;
+                rtg4_current_unique_error_code = unique_exit_code;
+                
                 error_code = DPE_PROCESS_DATA_ERROR;
                 break;
             }
             else if ((rtg4_poll_buf[0] & 0x4u) != 0u)
             {
+                if (rtg4_poll_buf[1] != 0u)
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nBitstream error.");
+                    #endif
+                    
+                    if ((rtg4_poll_buf[1] == 2u) || (rtg4_poll_buf[1] == 4u) || (rtg4_poll_buf[1] == 8u))
+                    {
+                        unique_exit_code = 32781;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nBitstream or data is corrupted or noisy.");
+                        #endif
+                    }
+                    else if (rtg4_poll_buf[1] == 10u)
+                    {
+                        unique_exit_code = 32783;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nIncorrect DEVICEID.");
+                        #endif
+                    }
+                }              
+                if ((rtg4_poll_buf[0] & 0xf8u) == 0x18u)
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nProgramming mode is not enabled.");
+                    #endif
+                }
+                else if ((rtg4_poll_buf[0] & 0xf8u) == 0x10u)
+                {
+                    unique_exit_code = 32784;
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nOperation has been disabled by programming bitstream settings.");
+                    #endif
+                }
+                else if ((rtg4_poll_buf[0] & 0xf8u) == 0x8u)
+                {
+                    unique_exit_code = 32775;
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nFailed to verify FPGA Array.");              
+                    #endif
+                }
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
                 dp_display_value(global_uint2, DEC);
@@ -931,11 +1277,79 @@ void dp_RTG4M_process_data(DPUCHAR BlockID)
                 dp_display_array(rtg4_poll_buf,4u,HEX);
                 dp_display_text((DPCHAR*)"\r\nERRORCODE: ");
                 dp_display_value((rtg4_poll_buf[0]>>3u) & 0x1fu,HEX);
-                dp_display_text((DPCHAR*)"\r\nAUTHERRCODE: ");
+                dp_display_text((DPCHAR*)"\r\nBSERRCODE: ");
                 dp_display_value(rtg4_poll_buf[1],HEX);
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
                 #endif
+                
+                rtg4_current_failed_component = global_uint2;
+                rtg4_current_failed_block = global_ulong2;
+                rtg4_current_error_code = (rtg4_poll_buf[0]>>3u) & 0x1fu;
+                rtg4_current_bserror_code = rtg4_poll_buf[1];
+                rtg4_current_unique_error_code = unique_exit_code;
+                
+                dp_RTG4M_read_debug_info();
+                if (error_code != DPE_SUCCESS)
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nFailed to read debug information." );
+                    #endif
+                }
+                else
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nDebug information: " );
+                    dp_display_array(rtg4_poll_buf,16u,HEX);
+                    #endif
+                }
                 error_code = DPE_PROCESS_DATA_ERROR;
                 break;
+            }
+        }
+        else
+        {
+            if ((global_ulong2 % 100u) == 0u)
+            {
+                dp_RTG4M_get_data_status();
+                if ((rtg4_poll_buf[0] &0x2u) != 0x2u)
+                {
+                    unique_exit_code = 32789;
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"Error, device is not ready");
+                    dp_display_text((DPCHAR*)"\r\nblockNo: ");
+                    dp_display_value(global_ulong2, DEC);
+                    dp_display_text((DPCHAR*)"\r\nDATA_STATUS_RESULT: ");
+                    dp_display_array(rtg4_poll_buf,4u,HEX);
+                    dp_display_text((DPCHAR*)"\r\nERRORCODE: ");
+                    dp_display_value((rtg4_poll_buf[0]>>3u) & 0x1fu,HEX);
+                    dp_display_text((DPCHAR*)"\r\nBSERRCODE: ");
+                    dp_display_value(rtg4_poll_buf[1],HEX);
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                    dp_display_value(unique_exit_code, HEX);
+                    #endif
+                    rtg4_current_failed_component = global_uint2;
+                    rtg4_current_failed_block = global_ulong2;
+                    rtg4_current_error_code = (rtg4_poll_buf[0]>>3u) & 0x1fu;
+                    rtg4_current_bserror_code = rtg4_poll_buf[1];
+                    rtg4_current_unique_error_code = unique_exit_code;
+                    dp_RTG4M_read_debug_info();                    
+                    if (error_code != DPE_SUCCESS)
+                    {
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nFailed to read debug information." );
+                        #endif
+                    }
+                    else
+                    {
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nDebug information: " );
+                        dp_display_array(rtg4_poll_buf,16u,HEX);
+                        #endif
+                    }
+                    error_code = DPE_PROCESS_DATA_ERROR;
+                    break;
+                }
             }
         }
         DataIndex += RTG4M_FRAME_BIT_LENGTH;
@@ -959,6 +1373,60 @@ void dp_RTG4M_get_data_status(void)
     return;
 }
 
+void dp_RTG4M_read_debug_info(void)
+{
+    opcode = RTG4M_DEBUG_INFO;
+    IRSCAN_in();
+    DRSCAN_in(0u, RTG4M_FRAME_STATUS_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,RTG4M_STANDARD_CYCLES);
+    dp_delay(RTG4M_STANDARD_DELAY);
+    
+    opcode = RTG4M_DEBUG_INFO;
+    dp_RTG4M_device_poll(129u, 128u);
+    
+    return;
+}
+
+void dp_RTG4M_check_cycle_count(void)
+{
+    DPUINT cycle_count = 0;
+    opcode = RTG4M_QUERY_SECURITY;
+    IRSCAN_in();
+    DRSCAN_in(0u, RTG4M_STATUS_REGISTER_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,RTG4M_STANDARD_CYCLES);
+    opcode = RTG4M_QUERY_SECURITY;
+    dp_RTG4M_device_poll(64u, 63u);
+    if (error_code != DPE_SUCCESS)
+    {
+        unique_exit_code = 32782;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to query programming bitstream settings: Instruction timed out.");	
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);        
+        #endif
+    }
+    else
+    {
+        #ifdef ENABLE_DISPLAY
+        
+        cycle_count = (rtg4_poll_buf[4] | (rtg4_poll_buf[5] >> 8u)) & 0x3ffu;
+        dp_display_text((DPCHAR*)"\r\nCYCLE COUNT: ");
+        if (cycle_count != 0x3ffu)
+        {
+            dp_display_value(cycle_count,DEC);
+            if (cycle_count > RTG4M_MAX_ALLOWED_PROGRAMMING_CYCLES)
+                dp_display_text((DPCHAR*)"\r\n***** WARNING: MAXIMUM ALLOWED PROGRAMMING CYCLE COUNT IS REACHED *****");
+        }
+        else
+        {
+            dp_display_text((DPCHAR*)" Not available. ");
+        }
+        #endif
+    }
+    return;
+}
+
+
 void dp_RTG4M_query_security(void)
 {
     opcode = RTG4M_QUERY_SECURITY;
@@ -969,8 +1437,11 @@ void dp_RTG4M_query_security(void)
     dp_RTG4M_device_poll(64u, 63u);
     if (error_code != DPE_SUCCESS)
     {
+        unique_exit_code = 32782;
         #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nFailed to query security information.");	
+        dp_display_text((DPCHAR*)"\r\nFailed to query programming bitstream settings: Instruction timed out.");	
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);        
         #endif
     }
     else

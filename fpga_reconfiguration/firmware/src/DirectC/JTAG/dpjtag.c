@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,17 +79,17 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
-#include "DirectC/dputil.h"
-#include "DirectC/JTAG/dpjtag.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/JTAG/dpchain.h"
-#include "DirectC/dpalg.h"
+#include "dpuser.h"
+#include "dputil.h"
+#include "dpjtag.h"
+#include "dpcom.h"
+#include "dpchain.h"
+#include "dpalg.h"
 
 
 #ifdef ENABLE_EMBEDDED_SUPPORT
 DPUCHAR current_jtag_state;
-DPUCHAR idx;
+DPUINT idx;
 DPUCHAR global_jtag_i;
 DPUCHAR data_buf;
 DPUCHAR bit_buf;
@@ -345,7 +345,7 @@ void dp_wait_cycles(DPUCHAR cycles)
 ****************************************************************************/
 void dp_shift_in(DPULONG start_bit, DPUINT num_bits, DPUCHAR tdi_data[], DPUCHAR terminate)
 {
-    idx = (DPUCHAR) start_bit >> 3;
+    idx = (DPUINT) start_bit >> 3;
     bit_buf = 1U << (DPUCHAR)(start_bit & 0x7U);
     if (tdi_data == (DPUCHAR*)DPNULL)
     {

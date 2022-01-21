@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,20 +79,30 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 #ifdef ENABLE_G5_SUPPORT
-#include "DirectC/dputil.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/dpalg.h"
+#include "dputil.h"
+#include "dpcom.h"
+#include "dpalg.h"
 #include "dpG5alg.h"
-#include "DirectC/JTAG/dpjtag.h"
+#include "dpjtag.h"
 
 DPUCHAR g5_pgmmode;
 DPUCHAR g5_pgmmode_flag;
-DPUCHAR g5_shared_buf[80]; 
+DPUCHAR g5_shared_buf[1024]; 
 DPUCHAR g5_poll_buf[17];
 DPULONG g5_poll_index;
+DPUCHAR g5_component_digest[32];
+DPUCHAR g5_component_type;
+DPUCHAR g5_componenet_Supports_Cert;
 
+DPUINT  g5_prev_failed_component = 0;
+DPULONG g5_prev_failed_block = 0;
+DPUINT  g5_prev_unique_error_code = 0;
+
+DPUINT  g5_current_failed_component = 0;
+DPULONG g5_current_failed_block = 0;
+DPUINT  g5_current_unique_error_code = 0;
 
 /****************************************************************************
 * Purpose: main entry function                                              
@@ -132,9 +142,13 @@ void dp_check_G5_action(void)
     else if (! (
     (Action_code == DP_ERASE_ACTION_CODE) ||
     (Action_code == DP_PROGRAM_ACTION_CODE) ||
+    (Action_code == DP_REPROGRAM_INFLIGHT_ACTION_CODE) ||
     (Action_code == DP_VERIFY_ACTION_CODE) ||
     (Action_code == DP_ENC_DATA_AUTHENTICATION_ACTION_CODE) ||
-    (Action_code == DP_VERIFY_DIGEST_ACTION_CODE)
+    (Action_code == DP_VERIFY_DIGEST_ACTION_CODE) || 
+    (Action_code == DP_READ_DEVICE_CERTIFICATE_ACTION_CODE) ||
+    (Action_code == DP_ZEROIZE_LIKE_NEW_ACTION_CODE) ||
+    (Action_code == DP_ZEROIZE_UNRECOVERABLE_ACTION_CODE)
     ))
     {
         error_code = DPE_ACTION_NOT_SUPPORTED;
@@ -147,20 +161,35 @@ void dp_check_G5_action(void)
 
 void dp_perform_G5_action (void)
 {
-    #ifdef ENABLE_DISPLAY
-    if (Action_code == DP_READ_IDCODE_ACTION_CODE)
+    Action_done = FALSE;
+    switch (Action_code) 
     {
+        case DP_ZEROIZE_LIKE_NEW_ACTION_CODE: 
+        Action_done = TRUE;
+        dp_G5M_zeroize_like_new_action();
+        break;
+        case DP_ZEROIZE_UNRECOVERABLE_ACTION_CODE: 
+        Action_done = TRUE;
+        dp_G5M_zeroize_unrecoverable_action();
+        break;
+        #ifdef ENABLE_DISPLAY
+        case DP_READ_IDCODE_ACTION_CODE: 
+        Action_done = TRUE;
         dp_read_idcode_action();
+        break;
+        case DP_DEVICE_INFO_ACTION_CODE: 
         Action_done = TRUE;
-    }
-    else if (Action_code == DP_DEVICE_INFO_ACTION_CODE)
-    {
         dp_G5M_device_info_action();
+        break;
+        case DP_READ_DEVICE_CERTIFICATE_ACTION_CODE: 
         Action_done = TRUE;
+        dp_G5M_read_device_certificate_action();
+        break;
+        #endif
     }
-    #endif
     if (Action_done == FALSE)
     {
+        dp_G5M_display_bitstream_digest();
         dp_check_image_crc();
         if (error_code == DPE_SUCCESS)
         {
@@ -170,18 +199,26 @@ void dp_perform_G5_action (void)
                 switch (Action_code) 
                 {
                     case DP_ERASE_ACTION_CODE: 
+                    Action_done = TRUE;
                     dp_G5M_erase_action();
                     break;         
                     case DP_PROGRAM_ACTION_CODE: 
+                    Action_done = TRUE;
                     dp_G5M_program_action();
                     break;
+                    case DP_REPROGRAM_INFLIGHT_ACTION_CODE:
+                    dp_G5M_reprogram_inflight_action();
+                    break;
                     case DP_VERIFY_ACTION_CODE: 
+                    Action_done = TRUE;
                     dp_G5M_verify_action();
                     break;
                     case DP_ENC_DATA_AUTHENTICATION_ACTION_CODE: 
+                    Action_done = TRUE;
                     dp_G5M_enc_data_authentication_action();
                     break;
-                    case DP_VERIFY_DIGEST_ACTION_CODE: 
+                    case DP_VERIFY_DIGEST_ACTION_CODE:
+                    Action_done = TRUE;
                     dp_G5M_verify_digest_action();
                     break;
                 }
@@ -194,6 +231,9 @@ void dp_perform_G5_action (void)
 
 void dp_G5M_erase_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming ERASE action: ");
+    #endif  
     dp_G5M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -217,10 +257,110 @@ void dp_G5M_erase_action(void)
     }
     return;
 }
+void dp_G5M_reprogram_inflight_action(void)
+{
+    DPUCHAR done = 0u;
+    DPUINT pgm_attempts = 0;
+    DPUINT vfy_attempts = 0;
+    
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming Reprogram_inFlight action: ");
+    #endif  
+    
+    dp_G5M_clear_errors();
+    
+    dp_G5M_initialize();
+    if (error_code == DPE_SUCCESS)
+    {
+        while ((!done) && (pgm_attempts < G5M_MAX_PROGRAM_ATTEMPTS))
+        {
+            error_code = DPE_SUCCESS;
+            vfy_attempts = 0;
+            pgm_attempts++;
+            dp_G5M_do_program();
+            if (error_code != DPE_SUCCESS)
+            {
+                // If the previous programming run failed on the same location, abort
+                if (
+                (g5_current_failed_component == g5_prev_failed_component) &&
+                (g5_current_failed_block == g5_prev_failed_block) &&
+                (g5_current_unique_error_code == g5_prev_unique_error_code)
+                )
+                {
+                    break;
+                }
+                else // Otherwise, save the error and try again
+                {
+                    g5_prev_failed_component = g5_current_failed_component;
+                    g5_prev_failed_block = g5_current_failed_block;
+                    g5_prev_unique_error_code = g5_current_unique_error_code;
+                }
+            }
+            else
+            {
+                dp_G5M_clear_errors();
+                
+                while ((!done) && (vfy_attempts < G5M_MAX_VERIFY_ATTEMPTS))
+                {
+                    error_code = DPE_SUCCESS;                  
+                    vfy_attempts++;
+                    dp_G5M_do_verify();
+                    if (error_code == DPE_SUCCESS)
+                    {
+                        done = 1u;
+                    }
+                    else if ( // If the error is the same as the previous error, abort.  It will attempt to reprogram
+                    (g5_current_failed_component == g5_prev_failed_component) &&
+                    (g5_current_failed_block == g5_prev_failed_block) &&
+                    (g5_current_unique_error_code == g5_prev_unique_error_code)
+                    )
+                    {
+                        dp_G5M_clear_errors();
+                        break;
+                    }
+                    else
+                    { // Otherwise, save the errors and try verify again.
+                        g5_prev_failed_component = g5_current_failed_component;
+                        g5_prev_failed_block = g5_current_failed_block;
+                        g5_prev_unique_error_code = g5_current_unique_error_code;
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
+
+void dp_G5M_clear_errors(void)
+{
+    g5_prev_failed_component = 0;
+    g5_current_failed_component = 0;
+    g5_prev_failed_block = 0;
+    g5_current_failed_block = 0;
+    
+    return;
+}
 
 void dp_G5M_program_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming PROGORAM action: ");
+    #endif
     dp_G5M_initialize();
+    if (error_code == DPE_SUCCESS)
+    {
+        dp_G5M_do_program();
+    }
+    
+    return;
+}
+
+void dp_G5M_do_program(void)
+{
+    #ifdef ENABLE_DISPLAY  
+    dp_display_text((DPCHAR*)"\r\nPerforming stand alone program...");
+    #endif
+    dp_G5M_check_cycle_count(); 
     if (error_code == DPE_SUCCESS)
     {
         g5_pgmmode = 0x1u;
@@ -240,38 +380,53 @@ void dp_G5M_program_action(void)
         }
         
     }
-    
     return;
 }
 
 void dp_G5M_verify_action(void)
 {
-    dp_G5M_initialize();
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nPerforming VERIFY action: ");
+    #endif
     
+    dp_G5M_initialize();
     if (error_code == DPE_SUCCESS)
     {
-        g5_pgmmode = 0x2u;
-        dp_G5M_set_mode();
-        
-        
-        if (error_code == DPE_SUCCESS)
-        {
-            /* Global unit1 is used to hold the number of components */
-            global_uint2 = 1u;
-            global_uint1 = (DPUINT)dp_get_bytes(Header_ID,G5M_DATASIZE_OFFSET,G5M_DATASIZE_BYTE_LENGTH);
-            dp_G5M_process_data(G5M_datastream_ID);
-            if(error_code != DPE_SUCCESS)
-            {
-                error_code = DPE_VERIFY_ERROR;
-            }
-        }
+        dp_G5M_do_verify();
     }
     
     return;
 }
 
+void dp_G5M_do_verify(void)
+{
+    #ifdef ENABLE_DISPLAY    
+    dp_display_text((DPCHAR*)"\r\nPerforming stand alone verify...");
+    #endif
+    
+    g5_pgmmode = 0x2u;
+    dp_G5M_set_mode();
+    
+    
+    if (error_code == DPE_SUCCESS)
+    {
+        /* Global unit1 is used to hold the number of components */
+        global_uint2 = 1u;
+        global_uint1 = (DPUINT)dp_get_bytes(Header_ID,G5M_DATASIZE_OFFSET,G5M_DATASIZE_BYTE_LENGTH);
+        dp_G5M_process_data(G5M_datastream_ID);
+        if(error_code != DPE_SUCCESS)
+        {
+            error_code = DPE_VERIFY_ERROR;
+        }
+    }
+    return;
+}
+
 void dp_G5M_enc_data_authentication_action(void)
 {
+    #ifdef ENABLE_DISPLAY  
+    dp_display_text((DPCHAR*)"\r\nPerforming AUTHENTICATION action: ");
+    #endif
     dp_G5M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -299,6 +454,9 @@ void dp_G5M_enc_data_authentication_action(void)
 
 void dp_G5M_verify_digest_action(void)
 {
+    #ifdef ENABLE_DISPLAY  
+    dp_display_text((DPCHAR*)"\r\nPerforming VERIFY_DIGEST action: ");    
+    #endif
     dp_G5M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -446,6 +604,25 @@ void dp_G5M_verify_digest_action(void)
     return;
 }
 
+void dp_G5M_zeroize_like_new_action(void)
+{
+    #ifdef ENABLE_DISPLAY                       
+    dp_display_text((DPCHAR*)"\r\nPerforming ZEROIZE_LIKE_NEW action: ");  
+    #endif
+    dp_G5M_do_zeroize(1);
+    return;
+}
+
+void dp_G5M_zeroize_unrecoverable_action(void)
+{
+    #ifdef ENABLE_DISPLAY                       
+    dp_display_text((DPCHAR*)"\r\nPerforming ZEROIZE_UNRECOVERABLE action: ");  
+    #endif
+    dp_G5M_do_zeroize(3);
+    return;
+}
+
+
 void dp_G5M_check_core_status(void)
 {
     
@@ -453,35 +630,76 @@ void dp_G5M_check_core_status(void)
     IRSCAN_out(&global_uchar1);
     goto_jtag_state(JTAG_RUN_TEST_IDLE,1u);
     
-    #ifdef ENABLE_DISPLAY
     if ((global_uchar1 & 0x80u) == 0x80u)
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+        core_is_enabled = 1;
     }
     else
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+        core_is_enabled = 0;
     }
-    #endif
-    
-}
-
-#ifdef ENABLE_DISPLAY
-void dp_G5M_device_info_action(void)
-{
-    dp_display_text((DPCHAR*)"\r\n\r\nDevice info:");
-    dp_read_usercode();
-    dp_G5M_check_core_status();
-    dp_G5M_read_design_info();
-    dp_G5M_read_debug_info();
-    dp_G5M_read_fsn();
-    dp_G5M_read_tvs_monitor();
-    dp_G5M_query_security();
-    dp_G5M_dump_security();
     
     return;
 }
 
+#ifdef ENABLE_DISPLAY
+void dp_G5M_display_core_status(void)
+{
+    if (core_is_enabled == 1)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+    }
+    else if (core_is_enabled == 0)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+    }
+    else
+    {
+        dp_display_text((DPCHAR*)"\r\nWarning: CoreEnable bit is not inspected.");
+    }
+    return;
+}
+
+void dp_G5M_read_device_certificate_action(void)
+{
+    dp_G5M_read_certificate();
+    return;
+}
+
+void dp_G5M_device_info_action(void)
+{
+    dp_display_text((DPCHAR*)"\r\n\r\nDevice info:");
+    dp_G5M_read_udv();
+    dp_read_usercode();
+    dp_G5M_check_core_status();
+    dp_G5M_display_core_status();
+    dp_G5M_read_design_info();
+    dp_G5M_read_digests();
+    dp_G5M_read_debug_info();
+    dp_G5M_dump_debug_info();
+    dp_G5M_read_fsn();
+    dp_G5M_read_tvs_monitor();
+    dp_G5M_query_security();
+    dp_G5M_dump_security();
+    if (device_family == G5M_FAMILY_ID_IN_DAT)
+        dp_G5M_read_dibs();
+    
+    return;
+}
+
+void dp_G5M_read_udv(void)
+{
+    opcode = G5M_UDV;
+    IRSCAN_in();
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);	
+    dp_delay(G5M_STANDARD_DELAY);
+    dp_G5M_device_poll(32u, 31u);
+    
+    dp_display_text((DPCHAR*)"\r\nUDV: ");
+    dp_display_array(g5_poll_buf,4u,HEX);
+    
+    return;
+}
 
 
 void dp_G5M_dump_security(void)
@@ -634,6 +852,38 @@ void dp_G5M_dump_security(void)
     return;
 }
 
+void dp_G5M_read_dibs(void)
+{
+    DPUCHAR dibs_in[16] = {0xB4, 0x70, 0xD8, 0x05, 0x01, 0x4F, 0x1C, 0x77, 0xDE, 0x47, 0x9E, 0xCE, 0x6A, 0x31, 0x72, 0x5C};
+    
+    opcode = G5M_READ_DEVICE_INTEGRITY;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_FRAME_BIT_LENGTH, dibs_in);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    dp_delay(G5M_STANDARD_DELAY);
+    dp_G5M_device_poll(128u, 127u);
+    if ((error_code != DPE_SUCCESS) || ((g5_poll_buf[0]&0x1u) == 0x1u))
+    {
+        error_code = DPE_POLL_ERROR;
+        unique_exit_code = 33003;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to read device integrity bits.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else
+    {
+        dp_G5M_read_shared_buffer(11);
+        #ifdef ENABLE_DISPLAY      
+        dp_display_text((DPCHAR*)"\r\nDevice Integrity Bits: ");
+        dp_display_array(g5_shared_buf, 32, HEX);
+        #endif
+    }
+    
+    return;
+}
+
 void dp_G5M_read_design_info(void)
 {
     opcode = G5M_READ_DESIGN_INFO;
@@ -670,6 +920,99 @@ void dp_G5M_read_design_info(void)
     return;
 }
 
+void dp_G5M_read_digests(void)
+{
+    opcode = G5M_READ_DIGEST;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_STATUS_REGISTER_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    dp_delay(G5M_STANDARD_DELAY);
+    opcode = G5M_READ_DIGEST;
+    dp_G5M_device_poll(8u, 7u);
+    if (error_code == DPE_SUCCESS)
+    {
+        dp_G5M_read_shared_buffer(26u);
+        if (error_code == DPE_SUCCESS)
+        {
+            dp_display_text((DPCHAR*)"\r\nFabric digest: ");
+            dp_display_array(&g5_shared_buf[0],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUFS CC segment digest: ");
+            dp_display_array(&g5_shared_buf[32],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nSNVM digest: ");
+            dp_display_array(&g5_shared_buf[64],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUFS UL digest: ");
+            dp_display_array(&g5_shared_buf[96],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 0: ");
+            dp_display_array(&g5_shared_buf[128],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 1: ");
+            dp_display_array(&g5_shared_buf[160],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 2: ");
+            dp_display_array(&g5_shared_buf[192],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 3: ");
+            dp_display_array(&g5_shared_buf[224],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 4: ");
+            dp_display_array(&g5_shared_buf[256],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 5: ");
+            dp_display_array(&g5_shared_buf[288],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUser Key digest 6: ");
+            dp_display_array(&g5_shared_buf[320],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nUFS UPERM segment digest: ");
+            dp_display_array(&g5_shared_buf[352],32u,HEX);
+            
+            dp_display_text((DPCHAR*)"\r\nFactory digest: ");
+            dp_display_array(&g5_shared_buf[384],32u,HEX);
+        }
+    }
+    
+    return;
+}
+
+void dp_G5M_check_cycle_count(void)
+{
+    DPUINT cycle_count = 0;
+    opcode = G5M_READ_DEBUG_INFO;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_STATUS_REGISTER_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    dp_delay(G5M_STANDARD_DELAY);
+    
+    opcode = G5M_READ_DEBUG_INFO;
+    dp_G5M_device_poll(128u, 127u);
+    if (error_code == DPE_SUCCESS)
+    {
+        dp_G5M_read_shared_buffer(6u);
+        
+        cycle_count = ((g5_shared_buf[61] << 8u) | (g5_shared_buf[60]));
+        #ifdef ENABLE_DISPLAY
+        
+        dp_display_text((DPCHAR*)"\r\nCYCLE COUNT: ");
+        if (cycle_count != 0xffffu)
+        {
+            dp_display_value(cycle_count,DEC);
+            if (cycle_count > G5M_MAX_ALLOWED_PROGRAMMING_CYCLES)
+                dp_display_text((DPCHAR*)"\r\n***** WARNING: MAXIMUM ALLOWED PROGRAMMING CYCLE COUNT IS REACHED *****");
+        }
+        else
+        {
+            dp_display_text((DPCHAR*)" Not available. ");
+        }
+        #endif
+    }
+    return;
+}
+
+//#pragma optimize=none
 void dp_G5M_read_debug_info(void)
 {
     opcode = G5M_READ_DEBUG_INFO;
@@ -682,36 +1025,45 @@ void dp_G5M_read_debug_info(void)
     dp_G5M_device_poll(128u, 127u);
     if (error_code == DPE_SUCCESS)
     {
-        dp_G5M_read_shared_buffer(5u);
+        dp_G5M_read_shared_buffer(6u);
         dp_display_text((DPCHAR*)"\r\nDEBUG_INFO:\r\n");
-        dp_display_array(g5_shared_buf,80u,HEX);
-        
-        
-        
-        
-        global_uint1 = ((g5_shared_buf[61] << 8u) | (g5_shared_buf[60]));
-        dp_display_text((DPCHAR*)"\r\nCycle Count: ");
-        dp_display_value(global_uint1,DEC);
-        
-        if (g5_shared_buf[36] == 1u)
+        if (device_family == G5SOC_FAMILY)
         {
-            dp_display_text((DPCHAR*)"\r\nProgramming mode: JTAG");
+            dp_display_array(g5_shared_buf,94u,HEX);
         }
-        else if (g5_shared_buf[36] == 2u)
+        else
         {
-            dp_display_text((DPCHAR*)"\r\nProgramming mode: IAP");
+            dp_display_array(g5_shared_buf,84u,HEX);
         }
-        else if (g5_shared_buf[36] == 3u)
-        {
-            dp_display_text((DPCHAR*)"\r\nProgramming mode: SPI-Slave");
-        }
-        
-        if (((g5_shared_buf[32] &0x3fu) != 0) && ((g5_shared_buf[32] &0x3fu) != 0x3fu))
-        {
-            dp_display_text((DPCHAR*)"\r\nAlgorithm version: ");
-            dp_display_value(g5_shared_buf[32] & 0x3fu, DEC);
-        }
-        
+    }
+    
+    return;
+}
+
+void dp_G5M_dump_debug_info(void)
+{
+    
+    global_uint1 = ((g5_shared_buf[61] << 8u) | (g5_shared_buf[60]));
+    dp_display_text((DPCHAR*)"\r\nCycle Count: ");
+    dp_display_value(global_uint1,DEC);
+    
+    if (g5_shared_buf[36] == 1u)
+    {
+        dp_display_text((DPCHAR*)"\r\nProgramming mode: JTAG");
+    }
+    else if (g5_shared_buf[36] == 2u)
+    {
+        dp_display_text((DPCHAR*)"\r\nProgramming mode: IAP");
+    }
+    else if (g5_shared_buf[36] == 3u)
+    {
+        dp_display_text((DPCHAR*)"\r\nProgramming mode: SPI-Slave");
+    }
+    
+    if (((g5_shared_buf[32] &0x3fu) != 0) && ((g5_shared_buf[32] &0x3fu) != 0x3fu))
+    {
+        dp_display_text((DPCHAR*)"\r\nAlgorithm version: ");
+        dp_display_value(g5_shared_buf[32] & 0x3fu, DEC);
     }
     
     return;
@@ -726,7 +1078,17 @@ void dp_G5M_read_tvs_monitor(void)
     dp_delay(G5M_STANDARD_DELAY);
     opcode = G5M_TVS_MONITOR;
     dp_G5M_device_poll(128u, 127u);
-    if (error_code == DPE_SUCCESS)
+    if (error_code != DPE_SUCCESS)
+    {
+        error_code = DPE_MATCH_ERROR;
+        unique_exit_code = 32846;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to read tvs monitor.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else
     {
         dp_display_text((DPCHAR*)"\r\nTVS_MONITOR: ");
         dp_display_array(g5_poll_buf,G5M_FRAME_BYTE_LENGTH,HEX);
@@ -744,13 +1106,21 @@ void dp_G5M_read_fsn(void)
     goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
     opcode = G5M_READ_FSN;
     dp_G5M_device_poll(129u, 128u);
-    #ifdef ENABLE_DISPLAY
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    dp_display_text((DPCHAR*)"\r\nDSN: ");
-    dp_display_array(g5_poll_buf, 16u, HEX);
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    #endif
-    
+    if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
+    {
+        unique_exit_code = 32769;
+        dp_display_text((DPCHAR*)"\r\nFailed to read DSN.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+    }
+    else
+    {    
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+        dp_display_text((DPCHAR*)"\r\nDSN: ");
+        dp_display_array(g5_poll_buf, 16u, HEX);
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+        #endif
+    }   
     return;
 }
 #endif
@@ -763,6 +1133,7 @@ void dp_check_G5_device_ID (void)
     DataIndex = dp_get_bytes(Header_ID,G5M_ID_OFFSET,G5M_ID_BYTE_LENGTH);
     
     global_ulong1 = dp_get_bytes(Header_ID,G5M_ID_MASK_OFFSET,4U);
+    device_exception = (DPUCHAR)dp_get_bytes(Header_ID,G5M_DEVICE_EXCEPTION_OFFSET, G5M_DEVICE_EXCEPTION_BYTE_LENGTH);
     
     device_ID &= global_ulong1;
     DataIndex &= global_ulong1;
@@ -774,23 +1145,55 @@ void dp_check_G5_device_ID (void)
     {
         if (device_ID == DataIndex )
         {
-            #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nActID = ");
-            dp_display_value(device_ID,HEX);
-            dp_display_text((DPCHAR*)" ExpID = ");
-            dp_display_value(DataIndex,HEX);
-            dp_display_text((DPCHAR*)"\r\nDevice Rev = ");
-            dp_display_value(device_rev,HEX);
-            #endif
-            device_family = (DPUCHAR) dp_get_bytes(Header_ID,G5M_DEVICE_FAMILY_OFFSET,G5M_DEVICE_FAMILY_BYTE_LENGTH);
+            if ( ( (device_exception == MPF300T_ES_DEVICE_CODE) || (device_exception == MPF300TS_ES_DEVICE_CODE) || (device_exception == MPF300XT_DEVICE_CODE) ) 
+            && (device_rev > 4u))
+            {
+                unique_exit_code = 32857;
+                error_code = DPE_IDCODE_ERROR;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nFailed to verify IDCODE");
+                dp_display_text((DPCHAR*)"\r\nMPF300(XT|T_ES|TS_ES) programming file is not compatible with MPF300 production devices.");
+                dp_display_text((DPCHAR*)"\r\nYou must use a programming file for MPF300(T|TS|TL|TLS) device.");
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
+                #endif
+            }          
+            else if ( ( (device_exception == MPF300T_DEVICE_CODE) || (device_exception == MPF300TS_DEVICE_CODE) || (device_exception == MPF300TL_DEVICE_CODE) || (device_exception == MPF300TLS_DEVICE_CODE)) 
+            && (device_rev < 5u))
+            {
+                unique_exit_code = 32858;
+                error_code = DPE_IDCODE_ERROR;
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nFailed to verify IDCODE");
+                dp_display_text((DPCHAR*)"\r\nMPF300(T|TS|TL|TLS) programming file is not compatible with MPF300(XT|T_ES|TS_ES) devices.");
+                dp_display_text((DPCHAR*)"\r\nYou must use a programming file for MPF300(XT|T_ES|TS_ES) device.");
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
+                #endif
+            }          
+            else
+            {
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nActID = ");
+                dp_display_value(device_ID,HEX);
+                dp_display_text((DPCHAR*)" ExpID = ");
+                dp_display_value(DataIndex,HEX);
+                dp_display_text((DPCHAR*)"\r\nDevice Rev = ");
+                dp_display_value(device_rev,HEX);
+                #endif
+                device_family = (DPUCHAR) dp_get_bytes(Header_ID,G5M_DEVICE_FAMILY_OFFSET,G5M_DEVICE_FAMILY_BYTE_LENGTH);
+            }
         }
         else
         {
+            error_code = DPE_IDCODE_ERROR;
+            unique_exit_code = 32772;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)" ExpID = ");
             dp_display_value(DataIndex,HEX);
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_IDCODE_ERROR;
         }
     }
     else
@@ -891,10 +1294,13 @@ void dp_G5M_poll_device_ready(void)
     }
     if(g5_poll_index > G5M_MAX_CONTROLLER_POLL)
     {
+        error_code = DPE_POLL_ERROR;  
+        unique_exit_code = 32818;
         #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nDevice polling failed.");
+        dp_display_text((DPCHAR*)"\r\nDevice is busy.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
         #endif
-        error_code = DPE_POLL_ERROR;
     }
     
     return;
@@ -918,48 +1324,75 @@ void dp_G5M_set_pgm_mode(void)
 *   If BSR_SAMPLE is enabled, the data is not loaded.  Instead, the last known
 *   State of the IOs is maintained by stepping through DRCapture JTAG state.
 ****************************************************************************/
+
 void dp_G5M_load_bsr(void)
 {
+    DPUCHAR capture_last_known_io_state = 0;
+    DPUINT index;
+    DPUCHAR mask;
+    DPUCHAR c_mask;
+    DPUINT bsr_bits;
+    
     dp_G5M_check_core_status();
     
-    global_uint1 = (DPUINT) dp_get_bytes(G5M_Header_ID,G5M_NUMOFBSRBITS_OFFSET,G5M_NUMOFBSRBITS_BYTE_LENGTH);
+    bsr_bits = (DPUINT) dp_get_bytes(G5M_Header_ID,G5M_NUMOFBSRBITS_OFFSET,G5M_NUMOFBSRBITS_BYTE_LENGTH);
     opcode = ISC_SAMPLE;
     IRSCAN_in();
     
-    #ifdef BSR_SAMPLE
-    /* Capturing the last known state of the IOs is only valid if the core
-    was programmed.  Otherwise, load the BSR with what is in the data file. */
-    if ((global_uchar1 & 0x4u) != 0x4u)
-    {
-        dp_get_bytes(G5M_BsrPattern_ID,0u,1u);
-        if (return_bytes)
-        {
-            #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nWarning: FPGA array is not programmed. Loading BSR register...");
-            #endif
-            dp_get_and_DRSCAN_in(G5M_BsrPattern_ID, global_uint1, 0u);
-            goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-        }
-    }
-    else 
-    {
-        #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nMaintaining last known IO states...");
-        #endif
-        goto_jtag_state(JTAG_CAPTURE_DR,0u);
-        goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-    }
-    #else
     dp_get_bytes(G5M_BsrPattern_ID,0u,1u);
     if (return_bytes)
     {
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nLoading BSR...");
         #endif
-        dp_get_and_DRSCAN_in(G5M_BsrPattern_ID, global_uint1, 0u);
+        dp_get_and_DRSCAN_in(G5M_BsrPattern_ID, bsr_bits, 0u);
         goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
     }
-    #endif
+    
+    
+    /* Capturing the last known state of the IOs is only valid if the core
+    was programmed.  Otherwise, load the BSR with what is in the data file. */
+    if (core_is_enabled == 1)
+    {
+        for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+        {
+            if (dp_get_bytes(G5M_BsrPatternMask_ID,index,1u) != 0)
+            {
+                capture_last_known_io_state = 1;
+                break;
+            }
+        }
+        if (capture_last_known_io_state)
+        {
+            if (bsr_bits > MAX_BSR_BIT_SIZE)
+            {
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nError: number of bsr bits > max buffer size.\r\nSkipping maintain last known state of the IOs...");
+                #endif                
+            }
+            else 
+            {
+                DRSCAN_out(bsr_bits, (DPUCHAR*)DPNULL, bsr_sample_buffer);
+                
+                for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+                {
+                    bsr_buffer[index] = dp_get_bytes(G5M_BsrPattern_ID,index,1u);
+                    mask = dp_get_bytes(G5M_BsrPatternMask_ID,index,1u);
+                    
+                    if (mask != 0u)
+                    {
+                        c_mask = ~mask;
+                        bsr_buffer[index] = (bsr_buffer[index] & c_mask) | (bsr_sample_buffer[index] & mask);
+                    }
+                }
+                
+                opcode = ISC_SAMPLE;
+                IRSCAN_in();
+                DRSCAN_in(0, bsr_bits, bsr_buffer);
+                goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
+            }
+        }
+    }
     
     return;
 }
@@ -1034,6 +1467,41 @@ void dp_G5M_initialize(void)
     return;
 }
 
+void dp_G5M_poll_device_ready_during_exit(void)
+{
+    opcode = G5M_ISC_NOOP;
+    for (g5_poll_index = 0U; g5_poll_index <= G5M_MAX_EXIT_POLL; g5_poll_index++)
+    {
+        IRSCAN_in();
+        goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+        dp_delay(G5M_EXIT_POLL_DELAY);
+        DRSCAN_out(8u, (DPUCHAR*)DPNULL, g5_poll_buf);
+        
+        if ((g5_poll_buf[0] & 0x80u) == 0x0u)
+        {
+            break;
+        }
+    }
+    if (g5_poll_index > G5M_MAX_CONTROLLER_POLL)
+    {
+        error_code = DPE_POLL_ERROR;
+        unique_exit_code = 32818;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nDevice is busy.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else
+    {
+        //SAR 110023 wait for worst case IO calibration time.
+        goto_jtag_state(JTAG_RUN_TEST_IDLE, G5M_STANDARD_CYCLES);
+        dp_delay(G5M_IO_CALIBRATION_DELAY);
+    }
+    
+    return;
+    
+}
 
 /* Function is used to exit programming mode */
 void dp_G5M_exit(void)
@@ -1048,15 +1516,19 @@ void dp_G5M_exit(void)
         opcode = G5M_ISC_DISABLE;
         dp_G5M_device_poll(32u, 31u);
         #ifdef ENABLE_DISPLAY
-        if (error_code != DPE_SUCCESS)
+        if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
         {
             dp_display_text((DPCHAR*)"\r\nFailed to disable programming mode.");
         }
         #endif
     }
-    #ifdef ENABLE_DISPLAY
-    dp_G5M_read_fsn();
-    #endif
+    opcode = G5M_EXTEST2;
+    IRSCAN_in();
+    goto_jtag_state(JTAG_RUN_TEST_IDLE, G5M_STANDARD_CYCLES);
+    dp_delay(G5M_EXTEST2_DELAY);
+    
+    dp_G5M_poll_device_ready_during_exit();
+    
     goto_jtag_state(JTAG_TEST_LOGIC_RESET,5u);
     return;
 }
@@ -1072,7 +1544,10 @@ void dp_G5M_set_mode(void)
     #ifdef ENABLE_DISPLAY
     if (error_code != DPE_SUCCESS)
     {
+        unique_exit_code = 32770;
         dp_display_text((DPCHAR*)"r\nFailed to set programming mode.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
     }
     #endif
     
@@ -1082,6 +1557,10 @@ void dp_G5M_set_mode(void)
 
 void dp_G5M_process_data(DPUCHAR BlockID)
 {
+    DPUCHAR tmp_buf;
+    #ifdef ENABLE_DISPLAY
+    DPUCHAR owpKeymode;
+    #endif
     DataIndex = 0u;  
     /* Global unit1 is used to hold the number of components */
     /* Loop through the number of components */
@@ -1097,6 +1576,10 @@ void dp_G5M_process_data(DPUCHAR BlockID)
         global_ulong1 = dp_get_bytes(G5M_NUMBER_OF_BLOCKS_ID,(DPULONG)(((global_uint2 - 1u) * 22u) / 8u),4u);
         global_ulong1 >>= ((global_uint2 - 1U)* 22u) % 8u;
         global_ulong1 &= 0x3FFFFFu;
+        
+        g5_component_type = (DPUCHAR) dp_get_bytes(G5M_datastream_ID,G5M_COMPONENT_TYPE_IN_HEADER_BYTE+DataIndex/8,1);
+        g5_componenet_Supports_Cert = (DPUCHAR) dp_get_bytes(G5M_datastream_ID,G5M_GEN_CERT_BYTE + DataIndex / 8,1) & 0x2u;
+        
         
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nProcessing component ");
@@ -1123,6 +1606,13 @@ void dp_G5M_process_data(DPUCHAR BlockID)
                 #endif
                 old_progress = new_progress;
             }
+            if ( (global_ulong2 == 1) && (g5_component_type == G5M_COMP_OWP) )
+            {
+                owpKeymode = (DPUCHAR) dp_get_bytes(G5M_datastream_ID,G5M_OWP_KEY_MODE + DataIndex / 8,1);
+                dp_display_text((DPCHAR*)"\r\nOWP is being used and its keymode is ");
+                dp_display_value(owpKeymode, DEC);
+            }
+            
             #endif
             
             goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
@@ -1137,28 +1627,223 @@ void dp_G5M_process_data(DPUCHAR BlockID)
             {
                 dp_G5M_device_shift_and_poll(128u, 127u, BlockID, DataIndex + G5M_FRAME_BIT_LENGTH);
             }
-            if ( ((error_code != DPE_SUCCESS) || ((g5_poll_buf[0] & 0x18u) != 0u)) )
+            
+            if (error_code != DPE_SUCCESS)
             {
-                dp_G5M_get_data_status();
+                error_code = DPE_PROCESS_DATA_ERROR;
+                if (Action_code == DP_PROGRAM_ACTION_CODE)
+                    unique_exit_code = 32824;
+                else if (Action_code == DP_VERIFY_ACTION_CODE)
+                    unique_exit_code = 32822;
+                else if (Action_code == DP_ERASE_ACTION_CODE)
+                    unique_exit_code = 32820;
+                else if (Action_code ==DP_ENC_DATA_AUTHENTICATION_ACTION_CODE)
+                    unique_exit_code = 32818;
+                
                 #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
                 dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
                 dp_display_value(global_uint2, DEC);
                 dp_display_text((DPCHAR*)"\r\nblockNo: ");
                 dp_display_value(global_ulong2, DEC);
-                dp_display_text((DPCHAR*)"\r\nDATA_STATUS_RESULT: ");
-                dp_display_array(g5_poll_buf,4u,HEX);
-                dp_display_text((DPCHAR*)"\r\nERRORCODE: ");
-                dp_display_value((g5_poll_buf[0]>>3u) & 0x1fu,HEX);
-                dp_display_text((DPCHAR*)"\r\nAUTHERRCODE: ");
-                dp_display_value(g5_poll_buf[1],HEX);
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                dp_display_value(unique_exit_code, HEX);
+                #endif
+                g5_current_failed_component = global_uint2;
+                g5_current_failed_block = global_ulong2;
+                g5_current_unique_error_code = unique_exit_code;
+                
+                global_uint2 = global_uint1;
+                break;
+            }
+            else if ((g5_poll_buf[0] & 0x8u) != 0u)
+            {
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nComponentNo: ");
+                dp_display_value(global_uint2, DEC);
+                dp_display_text((DPCHAR*)"\r\nblockNo: ");
+                dp_display_value(global_ulong2, DEC);
+                dp_display_text((DPCHAR*)"\r\nFRAME_DATA_RESULT: ");
+                dp_display_array(g5_poll_buf,2u,HEX);
+                #endif
+                
+                dp_G5M_get_data_status();
+                if (error_code != DPE_SUCCESS)
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
+                    #endif
+                    g5_current_failed_component = global_uint2;
+                    g5_current_failed_block = global_ulong2;
+                    g5_current_unique_error_code = unique_exit_code;
+                    
+                }
+                else if ((g5_poll_buf[0] & 0x4u) != 0u)
+                {
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nDATA_STATUS_RESULT: ");
+                    dp_display_array(g5_poll_buf,8u,HEX);
+                    #endif
+                    
+                    if ((g5_poll_buf[1] == 1u) || (g5_poll_buf[1] == 2u) || (g5_poll_buf[1] == 4u) || (g5_poll_buf[1] == 8u) || 
+                    (g5_poll_buf[1] == 127u) || (g5_poll_buf[1] == 132u) || (g5_poll_buf[1] == 133u) || (g5_poll_buf[1] == 134u) || (g5_poll_buf[1] == 135u)
+                    )
+                    {
+                        unique_exit_code = 32799;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nBitstream or data is corrupted or noisy.");
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 3u)
+                    {
+                        unique_exit_code = 32801;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nInvalid/Corrupted encryption key." );
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 5u)
+                    {
+                        unique_exit_code = 32803;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nBack level not satisfied." );
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 6u)
+                    {
+                        unique_exit_code = 32847;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nBitstream programming action is disabled." );
+                        #endif
+                    }                    
+                    else if(g5_poll_buf[1] == 7u)
+                    {
+                        unique_exit_code = 32805;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nDSN binding mismatch." );
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 9u)
+                    {
+                        unique_exit_code = 32807;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nInsufficient device capabilities." );
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 10u)
+                    {
+                        unique_exit_code = 32809;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nIncorrect DEVICEID." );
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 11u)
+                    {
+                        unique_exit_code = 32811;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nProgramming file is out of date, please regenerate.");
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 12u)
+                    {
+                        unique_exit_code = 32813;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nProgramming file does not support verification.");
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 13u)
+                    {
+                        unique_exit_code = 32816;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nInvalid or inaccessible Device Certificate.");
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 129u)
+                    {
+                        unique_exit_code = 32797;
+                        #ifdef ENABLE_DISPLAY
+                        dp_display_text((DPCHAR*)"\r\nDevice security prevented operation.");
+                        #endif
+                    }
+                    else if(g5_poll_buf[1] == 128u)
+                    {
+                        if( ((g5_poll_buf[4] >> 2u) & 0x1fu) < 16u)
+                        {
+                            unique_exit_code = 32773;
+                            #ifdef ENABLE_DISPLAY
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify FPGA Array.");
+                            #endif
+                        }
+                        else
+                        {
+                            unique_exit_code = 32774;
+                            #ifdef ENABLE_DISPLAY
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify Fabric Configuration.");
+                            #endif
+                        }
+                    }
+                    else if(g5_poll_buf[1] == 131u)
+                    {
+                        tmp_buf = (g5_poll_buf[4] >> 2u) | (g5_poll_buf[5] << 6u);
+                        if (((g5_poll_buf[4]& 0x3u) == 1u) && (tmp_buf >= 2u) && (tmp_buf <= 222u) && (((g5_poll_buf[6] >> 1u) & 0x3u) == 1u))
+                        {
+                            unique_exit_code = 32776;
+                            #ifdef ENABLE_DISPLAY
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify sNVM.");
+                            #endif
+                        }
+                        else if (((g5_poll_buf[4]& 0x3u) == 1u) && (tmp_buf >= 2u) && (tmp_buf <= 222u) && (((g5_poll_buf[6] >> 1u) & 0x3u) == 2u))
+                        {
+                            unique_exit_code = 32857;
+                            #ifdef ENABLE_DISPLAY
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify pNVM.");
+                            #endif
+                        }
+                        else if( (g5_poll_buf[4]& 0x3u) == 3u)
+                        {
+                            unique_exit_code = 32775;
+                            #ifdef ENABLE_DISPLAY
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify Security.");
+                            #endif
+                        }
+                    }
+                    #ifdef ENABLE_DISPLAY
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                    dp_display_value(unique_exit_code, HEX);
+                    #endif
+                    g5_current_failed_component = global_uint2;
+                    g5_current_failed_block = global_ulong2;
+                    g5_current_unique_error_code = unique_exit_code;
+                }
+                #ifdef ENABLE_DISPLAY
+                dp_G5M_read_debug_info();
                 #endif
                 error_code = DPE_PROCESS_DATA_ERROR;
                 global_uint2 = global_uint1;
                 break;
             }
-            
             DataIndex += G5M_FRAME_BIT_LENGTH;
         }
+        #ifdef ENABLE_DISPLAY
+        if ((Action_code == DP_PROGRAM_ACTION_CODE) && g5_componenet_Supports_Cert && (error_code == DPE_SUCCESS))
+        {
+            dp_G5M_report_certificate();
+            if (g5_component_type == G5M_COMP_BITS)
+                dp_display_text((DPCHAR*)"\r\nBITS component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_FPGA)
+                dp_display_text((DPCHAR*)"\r\nFabric component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_KEYS)
+                dp_display_text((DPCHAR*)"\r\nSecurity component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_SNVM)
+                dp_display_text((DPCHAR*)"\r\nsNVM component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_ENVM)
+                dp_display_text((DPCHAR*)"\r\neNVM component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_OWP)
+                dp_display_text((DPCHAR*)"\r\nOWP component bitstream digest: ");
+            else if (g5_component_type == G5M_COMP_EOB)
+                dp_display_text((DPCHAR*)"\r\nEOB component bitstream digest: ");
+            dp_display_array(g5_component_digest, G5M_COMPONENT_DIGEST_BYTE_SIZE, HEX);
+        }
+        #endif
     }
     
     return;
@@ -1177,6 +1862,56 @@ void dp_G5M_get_data_status(void)
     
     return;
 }
+
+
+void dp_G5M_report_certificate(void)
+{
+    DPUINT index;
+    dp_G5M_read_shared_buffer(G5M_NUMBER_OF_COFC_BLOCKS); // CofC is 928 bits which is 116 bytes which is 7.25 blocks of data
+    
+    for (index = 0;index < G5M_COMPONENT_DIGEST_BYTE_SIZE; index++)
+    {
+        // 20 is the byte location of the digest
+        g5_component_digest[index] = g5_shared_buf[20 + index];
+    }
+    return;
+}
+
+void dp_G5M_read_certificate(void)
+{
+    DPUCHAR device_certificate_validated = 0u;
+    opcode = G5M_READ_DEVICE_CERT;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_STATUS_REGISTER_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    
+    opcode = G5M_READ_DEVICE_CERT;
+    dp_G5M_device_poll(8u, 7u);
+    if (error_code != DPE_SUCCESS)
+    {
+        unique_exit_code = 33000;      
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to read device certificate, device is busy" );
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else if((g5_poll_buf[0] & 0x2u) == 0x0u)
+    {
+        device_certificate_validated = g5_poll_buf[0] & 0x1u;
+        dp_G5M_read_shared_buffer(64u);
+        if (device_certificate_validated)
+        {
+            #ifdef ENABLE_DISPLAY           
+            dp_display_text((DPCHAR*)"\r\nDevice certificate signature has been verified.\r\nDEVICE_CERTIFICATE(LSB->MSB):");
+            dp_display_array_reverse(g5_shared_buf, 1024, HEX);
+            #endif
+        }
+        
+    }
+    return;  
+}
+
 
 void dp_G5M_read_security(void)
 {
@@ -1214,12 +1949,22 @@ void dp_G5M_query_security(void)
     }
     else
     {
-        dp_G5M_read_shared_buffer(1u);
-        
-        #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\n--- Security locks and configuration settings ---\r\n");	
-        dp_display_array(g5_shared_buf,16u,HEX);
-        #endif
+        if (device_family == G5SOC_FAMILY)
+        {
+            dp_G5M_read_shared_buffer(3u);
+            #ifdef ENABLE_DISPLAY
+            dp_display_text((DPCHAR*)"\r\n--- Security locks and configuration settings ---\r\n");
+            dp_display_array(g5_shared_buf,33u,HEX);
+            #endif
+        }
+        else
+        {
+            dp_G5M_read_shared_buffer(1u);
+            #ifdef ENABLE_DISPLAY
+            dp_display_text((DPCHAR*)"\r\n--- Security locks and configuration settings ---\r\n");
+            dp_display_array(g5_shared_buf,9u,HEX);
+            #endif
+        }
     }
     return;
 }
@@ -1286,10 +2031,13 @@ void dp_G5M_unlock_upk1(void)
         dp_G5M_device_poll(8u, 7u);
         if ((error_code != DPE_SUCCESS) || ((g5_poll_buf[0] & 0x3u) != 0x1u) )
         {
+            error_code = DPE_MATCH_ERROR;
+            unique_exit_code = 32784;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)"\r\nFailed to unlock user pass key 1.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_MATCH_ERROR;
         }
         else
         {
@@ -1324,10 +2072,13 @@ void dp_G5M_unlock_upk2(void)
         dp_G5M_device_poll(8u, 7u);
         if ((error_code != DPE_SUCCESS) || ((g5_poll_buf[0] & 0x3u) != 0x1u) )
         {
+            error_code = DPE_MATCH_ERROR;
+            unique_exit_code = 32785;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)"\r\nFailed to unlock user pass key 2.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_MATCH_ERROR;
         }
         else
         {
@@ -1450,6 +2201,123 @@ void dp_G5M_load_upk2(void)
     
     return;
 }
+void dp_G5M_display_bitstream_digest(void)
+{
+    
+    DataIndex = 0u;
+    global_uint1 = (DPUINT)dp_get_bytes(Header_ID,G5M_DATASIZE_OFFSET,G5M_DATASIZE_BYTE_LENGTH);
+    for (global_uint2 = 1u; global_uint2 <= global_uint1; global_uint2++)
+    {
+        /* get the number of blocks */
+        /* Global ulong1 is used to hold the number of blocks within the components */
+        global_ulong1 = dp_get_bytes(G5M_NUMBER_OF_BLOCKS_ID,(DPULONG)(((global_uint2 - 1u) * 22u) / 8u),4u);
+        global_ulong1 >>= ((global_uint2 - 1U)* 22u) % 8u;
+        global_ulong1 &= 0x3FFFFFu;
+        
+        #ifdef ENABLE_DISPLAY                  
+        g5_component_type = (DPUCHAR) dp_get_bytes(G5M_datastream_ID,G5M_COMPONENT_TYPE_IN_HEADER_BYTE+DataIndex/8,1);
+        if (g5_component_type == G5M_COMP_BITS)
+        {
+            DPUCHAR * data_address = (DPUCHAR*)DPNULL;
+            data_address = dp_get_data(G5M_datastream_ID, G5M_BSDIGEST_BYTE_OFFSET * 8 + DataIndex);
+            dp_display_text((DPCHAR*)"\r\nBITSTREAM_DIGEST = ");
+            dp_display_array(data_address, G5M_BSDIGEST_BYTE_SIZE, HEX);
+        }
+        #endif
+        DataIndex += G5M_FRAME_BIT_LENGTH * global_ulong1;
+    }
+    
+    
+    return;
+}
+
+
+void dp_G5M_do_zeroize(DPUCHAR zmode)
+{
+    DPUCHAR zeroize_result[16] = {0x00, 0xB6, 0x16, 0x3B, 0x25, 0xC3, 0x0A, 0xE5, 0x7B, 0x5D, 0x19, 0x00, 0x45, 0x06, 0x31, 0xA8};
+    zeroize_result[0] = zmode;
+    
+    opcode = G5M_ZEROIZE;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_FRAME_BIT_LENGTH, zeroize_result);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    opcode = G5M_ZEROIZE;
+    dp_G5M_device_poll(128u, 127u);
+    if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
+    {
+        unique_exit_code = 32848;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to load zeroize instruction.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else if(g5_poll_buf[0] & 0x1u == 1u)
+    {
+        #ifdef ENABLE_DISPLAY      
+        dp_display_text((DPCHAR*)"\r\nZEROIZE_RESULT: ");
+        dp_display_array(g5_poll_buf, 16, HEX);
+        #endif
+        error_code = DPE_POLL_ERROR;
+        unique_exit_code = 32849;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to zeroize the device.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else
+    {
+        dp_G5M_do_read_zeroization_result();
+    }
+    
+    return;
+}
+
+void dp_G5M_do_read_zeroization_result(void)
+{
+    opcode = G5M_READ_ZEROIZATION_RESULT;
+    IRSCAN_in();
+    DRSCAN_in(0u, G5M_FRAME_BIT_LENGTH, (DPUCHAR*)(DPUCHAR*)DPNULL);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G5M_STANDARD_CYCLES);
+    opcode = G5M_READ_ZEROIZATION_RESULT;
+    dp_G5M_device_poll(128u, 127u);  
+    if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
+    {
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nread_zeroize_result: ");
+        dp_display_array(g5_poll_buf, 16, HEX);
+        #endif
+        unique_exit_code = 32853;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to load read zeroization instruction.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else if(g5_poll_buf[0] & 0x3u > 0u)
+    {
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nread_zeroize_result: ");
+        dp_display_array(g5_poll_buf, 16, HEX);
+        #endif
+        error_code = DPE_POLL_ERROR;
+        unique_exit_code = 32854;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to read zeroization certificate.\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else
+    {
+        dp_G5M_read_shared_buffer(9);
+        #ifdef ENABLE_DISPLAY      
+        dp_display_text((DPCHAR*)"\r\nFETCH_ZEROIZATION_RESULT: ");
+        dp_display_array(g5_shared_buf, 131, HEX);
+        #endif      
+        
+    }
+    
+    return;
+}
+
 #endif /* ENABLE_G5_SUPPORT */
 
 /* *************** End of File *************** */

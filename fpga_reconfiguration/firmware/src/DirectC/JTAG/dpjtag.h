@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -119,7 +119,7 @@ void dp_get_and_DRSCAN_in_out(DPUCHAR Variable_ID,DPUCHAR total_bits_to_shift, D
 #ifdef ENABLE_EMBEDDED_SUPPORT
 extern DPUCHAR global_jtag_i;
 extern DPUCHAR current_jtag_state;
-extern DPUCHAR idx;
+extern DPUINT idx;
 extern DPUCHAR data_buf;
 extern DPUCHAR bit_buf;
 #endif

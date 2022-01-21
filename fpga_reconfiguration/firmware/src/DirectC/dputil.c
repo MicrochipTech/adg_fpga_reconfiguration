@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,10 +79,10 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
-#include "DirectC/dputil.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/dpalg.h"
+#include "dpuser.h"
+#include "dputil.h"
+#include "dpcom.h"
+#include "dpalg.h"
 
 /*
 * General purpose Global variables needed in the program
@@ -135,7 +135,9 @@ void dp_init_vars(void)
 */
 void dp_check_image_crc(void)
 {
+    #ifdef PERFORM_CRC_CHECK  
     DPUINT expected_crc;
+    #endif
     #ifdef PERFORM_CRC_CHECK
     #ifdef ENABLE_DISPLAY        
     dp_display_text((DPCHAR*)"\r\nChecking data CRC...");
@@ -148,10 +150,12 @@ void dp_check_image_crc(void)
     {
         requested_bytes = 0u;
         image_size = dp_get_bytes(Header_ID,IMAGE_SIZE_OFFSET,4u); 
+        #ifdef PERFORM_CRC_CHECK
         expected_crc = (DPUINT) dp_get_bytes(Header_ID,image_size - 2u,2u);
         #ifdef ENABLE_DISPLAY        
         dp_display_text((DPCHAR*)"\r\nExpected CRC=");
         dp_display_value( expected_crc ,HEX);
+        #endif
         #endif
         if (image_size == 0u)
         {
@@ -224,9 +228,6 @@ void dp_check_image_crc(void)
         #endif
         error_code = DPE_CRC_MISMATCH;
     }
-    /* User defined */
-    /* Reset elapsed time if applicable */
-    /* End of User defined */
     return;
 }
 
@@ -295,7 +296,7 @@ int int_to_hex_int(int value, unsigned char * p_result, int result_size)
     return nibble_idx;
 }
 
-int int_to_dec_int (int value, unsigned char * p_result, int result_size)
+int int_to_dec_int (int value, unsigned char * p_result)
 {
     unsigned char conv_array[NB_NIBBLES_IN_INT];
     unsigned int uvalue;
@@ -327,6 +328,12 @@ int int_to_dec_int (int value, unsigned char * p_result, int result_size)
         p_result[digit_idx] = conv_array[nb_digits - digit_idx - 1];
     }
     return digit_idx;
+}
+
+int int_to_chr_int(int value, unsigned char * p_result)
+{
+    p_result[0] = value;
+    return 1;
 }
 #endif
 

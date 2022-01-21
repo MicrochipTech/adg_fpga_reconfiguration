@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -79,23 +79,27 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /* ************************************************************************ */
 
-#include "DirectC/dpuser.h"
+#include "dpuser.h"
 #ifdef ENABLE_G4_SUPPORT
-#include "DirectC/dputil.h"
-#include "DirectC/dpcom.h"
-#include "DirectC/dpalg.h"
+#include "dputil.h"
+#include "dpcom.h"
+#include "dpalg.h"
 #include "dpG4alg.h"
-#include "DirectC/JTAG/dpjtag.h"
+#include "dpjtag.h"
 
 DPUCHAR pgmmode;
 DPUCHAR pgmmode_flag;
 DPUCHAR envm_only_flag;
 DPUCHAR sec_ul;
-DPUCHAR shared_buf[96]; // Maximum of 768
+DPUCHAR shared_buf[768]; // Maximum of 768 bytes
 DPUCHAR poll_buf[17];
 DPULONG poll_index;
 DPUCHAR SYSREG_TEMP[4];
 DPUCHAR component_type;
+DPUCHAR envm_module_id = 0u;
+DPUCHAR prep_bitstream = 0u;
+DPUINT  certificate_size = 0u;
+DPUCHAR certificate_support = 0u;
 
 DPUCHAR security_queried;
 
@@ -141,7 +145,8 @@ void dp_check_G4_action(void)
     (Action_code == DP_PROGRAM_ACTION_CODE) ||
     (Action_code == DP_VERIFY_ACTION_CODE) ||
     (Action_code == DP_ENC_DATA_AUTHENTICATION_ACTION_CODE) ||
-    (Action_code == DP_VERIFY_DIGEST_ACTION_CODE)
+    (Action_code == DP_VERIFY_DIGEST_ACTION_CODE) ||
+    (Action_code == DP_READ_DEVICE_CERTIFICATE_ACTION_CODE)
     ))
     {
         error_code = DPE_ACTION_NOT_SUPPORTED;
@@ -155,53 +160,69 @@ void dp_check_G4_action(void)
 void dp_perform_G4_action (void)
 {
     #ifdef ENABLE_DISPLAY
-    if (Action_code == DP_READ_IDCODE_ACTION_CODE)
-    {
-        dp_read_idcode_action();
-        Action_done = TRUE;
-    }
-    else if (Action_code == DP_DEVICE_INFO_ACTION_CODE)
-    {
-        dp_G4M_device_info_action();
-        Action_done = TRUE;
-    }
+    dp_G4M_display_bitstream_digest();
+    dp_G4M_read_certificate();
     #endif
-    if (Action_done == FALSE)
-    {
-        dp_check_image_crc();
-        if (error_code == DPE_SUCCESS)
+    if (error_code == DPE_SUCCESS)
+    {  
+        #ifdef ENABLE_DISPLAY
+        if (Action_code == DP_READ_IDCODE_ACTION_CODE)
         {
-            dp_check_G4_device_ID();
+            dp_read_idcode_action();
+            Action_done = TRUE;
+        }
+        else if (Action_code == DP_DEVICE_INFO_ACTION_CODE)
+        {
+            dp_G4M_device_info_action();
+            Action_done = TRUE;
+        }
+        else if(Action_code == DP_READ_DEVICE_CERTIFICATE_ACTION_CODE)
+        {
+            dp_display_text((DPCHAR*)"\r\nReading device certificate...");
+            dp_G4M_read_device_certificate_action();
+            Action_done = TRUE;
+        }            
+        #endif
+        if (Action_done == FALSE)
+        {
+            dp_check_image_crc();
             if (error_code == DPE_SUCCESS)
             {
-                switch (Action_code) 
+                dp_check_G4_device_ID();
+                if (error_code == DPE_SUCCESS)
                 {
-                    case DP_ERASE_ACTION_CODE: 
-                    dp_G4M_erase_action();
-                    break;         
-                    case DP_PROGRAM_ACTION_CODE: 
-                    dp_G4M_program_action();
-                    break;
-                    case DP_VERIFY_ACTION_CODE: 
-                    dp_G4M_verify_action();
-                    break;
-                    case DP_ENC_DATA_AUTHENTICATION_ACTION_CODE: 
-                    dp_G4M_enc_data_authentication_action();
-                    break;
-                    case DP_VERIFY_DIGEST_ACTION_CODE: 
-                    dp_G4M_verify_digest_action();
-                    break;
+                    switch (Action_code) 
+                    {
+                        case DP_ERASE_ACTION_CODE: 
+                        dp_G4M_erase_action();
+                        break;         
+                        case DP_PROGRAM_ACTION_CODE: 
+                        dp_G4M_program_action();
+                        break;
+                        case DP_VERIFY_ACTION_CODE: 
+                        dp_G4M_verify_action();
+                        break;
+                        case DP_ENC_DATA_AUTHENTICATION_ACTION_CODE: 
+                        dp_G4M_enc_data_authentication_action();
+                        break;
+                        case DP_VERIFY_DIGEST_ACTION_CODE: 
+                        dp_G4M_verify_digest_action();
+                        break;
+                    }
                 }
             }
         }
+        dp_G4M_exit();
     }
-    dp_G4M_exit();
     return;
 }
 
 
 void dp_G4M_erase_action(void)
 {
+    #ifdef  ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nErasing FPGA Array...");
+    #endif
     dp_G4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -230,6 +251,9 @@ void dp_G4M_erase_action(void)
 
 void dp_G4M_program_action(void)
 {
+    #ifdef ENABLE_DISPLAY  
+    dp_display_text((DPCHAR*)"\r\nProgramming FPGA Array...");
+    #endif
     dp_G4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -287,6 +311,9 @@ void dp_G4M_program_action(void)
 
 void dp_G4M_verify_action(void)
 {
+    #ifdef ENABLE_DISPLAY
+    dp_display_text((DPCHAR*)"\r\nVerifying FPGA Array...");  
+    #endif
     dp_G4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -339,6 +366,9 @@ void dp_G4M_verify_action(void)
 
 void dp_G4M_enc_data_authentication_action(void)
 {
+    #ifdef ENABLE_DISPLAY    
+    dp_display_text((DPCHAR*)"\r\nEncrypted data authentication...");  
+    #endif
     dp_G4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -366,6 +396,9 @@ void dp_G4M_enc_data_authentication_action(void)
 
 void dp_G4M_verify_digest_action(void)
 {
+    #ifdef ENABLE_DISPLAY    
+    dp_display_text((DPCHAR*)"\r\nVerifying Digest...");
+    #endif  
     dp_G4M_initialize();
     if (error_code == DPE_SUCCESS)
     {
@@ -421,17 +454,23 @@ void dp_G4M_verify_digest_action(void)
         {
             if (( poll_buf[1] & 0x3c0u) == 0x3cu)
             {
+                error_code = DPE_VERIFY_DIGEST_ERROR;
+                unique_exit_code = 32787;
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nDigest request from SPI/JTAG is protected by user pass key 1.");
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                dp_display_value(unique_exit_code, HEX);
                 #endif
-                error_code = DPE_VERIFY_DIGEST_ERROR;
             }
             else if (( poll_buf[1] & 0x40u) == 0x40u)
             {
+                error_code = DPE_VERIFY_DIGEST_ERROR;
+                unique_exit_code = 32788;
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nFailed to verify digest.");
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                dp_display_value(unique_exit_code, HEX);
                 #endif
-                error_code = DPE_VERIFY_DIGEST_ERROR;
             }
             if ((global_buf1[0] & 0x1u) == 0x1u)
             {
@@ -443,10 +482,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    error_code = DPE_VERIFY_DIGEST_ERROR;
+                    unique_exit_code = 32789;
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nFPGA Fabric digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
                 if (( poll_buf[0] & 0x80u) == 0x80u)
                 {
@@ -456,10 +498,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    error_code = DPE_VERIFY_DIGEST_ERROR;
+                    unique_exit_code = 32796;
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nFabric configuration segment digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             if ((global_buf1[0] & 0x2u) == 0x2u)
@@ -472,10 +517,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    error_code = DPE_VERIFY_DIGEST_ERROR;
+                    unique_exit_code = 32790;
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\neNVM_0 digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             if ((global_buf1[0] & 0x4u) == 0x4u)
@@ -488,10 +536,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    unique_exit_code = 32791;
+                    error_code = DPE_VERIFY_DIGEST_ERROR;                    
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\neNVM_1 digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             if ((sec_ul & 0x2u) == 0x2u)
@@ -504,10 +555,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    unique_exit_code = 32792;
+                    error_code = DPE_VERIFY_DIGEST_ERROR;
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nUser security policies segment digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             dp_get_data(G4M_UPK1_ID,0u);
@@ -521,10 +575,13 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    unique_exit_code = 32793;
+                    error_code = DPE_VERIFY_DIGEST_ERROR;                    
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nUser key set 1 segment digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             dp_get_data(G4M_UPK2_ID,0u);
@@ -538,22 +595,33 @@ void dp_G4M_verify_digest_action(void)
                 }
                 else
                 {
+                    unique_exit_code = 32794;
+                    error_code = DPE_VERIFY_DIGEST_ERROR;
                     #ifdef ENABLE_DISPLAY
                     dp_display_text((DPCHAR*)"\r\nUser key set 2 segment digest verification: FAIL");
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_VERIFY_DIGEST_ERROR;
                 }
             }
             if (( poll_buf[0] & 0x40u) == 0x0u)
             {
+                unique_exit_code = 32795;
+                error_code = DPE_VERIFY_DIGEST_ERROR;
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nFactory row and factory key segment digest verification: FAIL");
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                dp_display_value(unique_exit_code, HEX);
                 #endif
-                error_code = DPE_VERIFY_DIGEST_ERROR;
             }
         }
     }
     return;
+}
+
+void dp_G4M_read_device_certificate_action(void)
+{
+    dp_G4M_read_certificate();
 }
 
 void dp_G4M_check_core_status(void)
@@ -563,18 +631,35 @@ void dp_G4M_check_core_status(void)
     IRSCAN_out(&global_uchar1);
     goto_jtag_state(JTAG_RUN_TEST_IDLE,1u);
     
-    #ifdef ENABLE_DISPLAY
     if ((global_uchar1 & 0x4u) == 0x4u)
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+        core_is_enabled = 1u;
     }
     else
     {
-        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+        core_is_enabled = 0u;
     }
-    #endif
+    
     
     return;
+}
+
+void dp_G4M_display_core_status(void)
+{
+    #ifdef ENABLE_DISPLAY
+    if (core_is_enabled == 1)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is programmed and enabled.");
+    }
+    else if (core_is_enabled == 0)
+    {
+        dp_display_text((DPCHAR*)"\r\nFPGA Array is not enabled.");
+    }
+    else
+    {
+        dp_display_text((DPCHAR*)"\r\nWarning: CoreEnable bit is not inspected.");
+    }
+    #endif
 }
 
 
@@ -582,6 +667,7 @@ void dp_G4M_check_core_status(void)
 void dp_G4M_device_info_action(void)
 {
     dp_G4M_check_core_status();
+    dp_G4M_display_core_status();
     if (error_code == DPE_SUCCESS)
     {
         dp_G4M_read_design_info();
@@ -596,7 +682,8 @@ void dp_G4M_device_info_action(void)
                     dp_G4M_read_fsn();
                     if (error_code == DPE_SUCCESS)
                     {
-                        dp_G4M_read_security();
+                        dp_G4M_read_security();		 
+                        dp_G4M_dump_security_info();
                     }
                 }
             }
@@ -656,6 +743,18 @@ void dp_G4M_read_prog_info(void)
     {
         dp_display_text((DPCHAR*)"\r\nPROG_INFO: ");
         dp_display_array(poll_buf,16u,HEX);
+        
+        dp_display_text((DPCHAR*)"\r\nCYCLE COUNT: ");
+        global_uint1 = poll_buf[1]*256+poll_buf[0];
+        if ((global_uint1 == 0) || (global_uint1 == 0xffff))
+        {
+            dp_display_text((DPCHAR*)" Not available");
+        }
+        else
+        {
+            dp_display_value(global_uint1, DEC);
+        }
+        
         if ((poll_buf[6] & 0x1) == 0u)
         {
             dp_display_text((DPCHAR*)"\r\nVCC was programmed at 1.2V");
@@ -704,11 +803,19 @@ void dp_G4M_read_fsn(void)
     goto_jtag_state(JTAG_RUN_TEST_IDLE,G4M_STANDARD_CYCLES);
     opcode = G4M_READ_FSN;
     dp_G4M_device_poll(129u, 128u);
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    dp_display_text((DPCHAR*)"\r\nDSN: ");
-    dp_display_array(poll_buf, 16u, HEX);
-    dp_display_text((DPCHAR*)"\r\n=====================================================================");
-    
+    if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
+    {
+        unique_exit_code = 32769;
+        dp_display_text((DPCHAR*)"\r\nFailed to read DSN.\r\nERROR_CODE: 0x");
+        dp_display_value(unique_exit_code, HEX);
+    }
+    else
+    {
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+        dp_display_text((DPCHAR*)"\r\nDSN: ");
+        dp_display_array(poll_buf, 16u, HEX);
+        dp_display_text((DPCHAR*)"\r\n=====================================================================");
+    }
     return;
 }
 
@@ -766,15 +873,24 @@ void dp_check_G4_device_ID (void)
             dp_display_text((DPCHAR*)"\r\nDevice Rev = ");
             dp_display_value(device_rev,HEX);
             #endif
+            
             device_family = (DPUCHAR) dp_get_bytes(Header_ID,G4M_DEVICE_FAMILY_OFFSET,G4M_DEVICE_FAMILY_BYTE_LENGTH);
+            certificate_size = NEW_FORMAT_CERTIFICATE_SIZE;
+            if ((device_ID == M2S050_ID) && (device_rev < 4u))
+                certificate_size = OLD_FORMAT_CERTIFICATE_SIZE;
+            if ((device_ID != M2S050_ID) && (device_ID != M2S060_ID) && (device_rev < 1u))
+                certificate_size = OLD_FORMAT_CERTIFICATE_SIZE;
         }
         else
         {
+            error_code = DPE_IDCODE_ERROR;
+            unique_exit_code = 32772;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)" ExpID = ");
             dp_display_value(DataIndex,HEX);
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_IDCODE_ERROR;
         }
     }
     else
@@ -873,10 +989,13 @@ void dp_G4M_poll_device_ready(void)
     }
     if(poll_index > G4M_MAX_CONTROLLER_POLL)
     {
+        error_code = DPE_POLL_ERROR;  
+        unique_exit_code = 32818;
         #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nDevice polling failed.");
+        dp_display_text((DPCHAR*)"\r\nDevice is busy.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+        dp_display_value(unique_exit_code, HEX);
         #endif
-        error_code = DPE_POLL_ERROR;
     }
     
     return;
@@ -892,6 +1011,16 @@ void dp_set_pgm_mode(void)
     opcode = G4M_MODE;
     dp_G4M_device_poll(8u, 7u);
     
+    if (error_code != DPE_SUCCESS)
+    {
+        unique_exit_code = 32770;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nFailed to configure device programming.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    
     return;
 }
 
@@ -902,48 +1031,72 @@ void dp_set_pgm_mode(void)
 ****************************************************************************/
 void dp_G4M_load_bsr(void)
 {
+    DPUCHAR capture_last_known_io_state = 0;
+    DPUINT index;
+    DPUCHAR mask;
+    DPUCHAR c_mask;
+    DPUINT bsr_bits;
+    
     dp_G4M_check_core_status();
     
-    
-    global_uint1 = (DPUINT) dp_get_bytes(G4M_Header_ID,G4M_NUMOFBSRBITS_OFFSET,G4M_NUMOFBSRBITS_BYTE_LENGTH);
+    bsr_bits = (DPUINT) dp_get_bytes(G4M_Header_ID,G4M_NUMOFBSRBITS_OFFSET,G4M_NUMOFBSRBITS_BYTE_LENGTH);
     opcode = ISC_SAMPLE;
     IRSCAN_in();
     
-    #ifdef BSR_SAMPLE
-    /* Capturing the last known state of the IOs is only valid if the core
-    was programmed.  Otherwise, load the BSR with what is in the data file. */
-    if ((global_uchar1 & 0x4u) != 0x4u)
-    {
-        dp_get_bytes(G4M_BsrPattern_ID,0u,1u);
-        if (return_bytes)
-        {
-            #ifdef ENABLE_DISPLAY
-            dp_display_text((DPCHAR*)"\r\nWarning: FPGA array is not programmed. Loading BSR register...");
-            #endif
-            dp_get_and_DRSCAN_in(G4M_BsrPattern_ID, global_uint1, 0u);
-            goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-        }
-    }
-    else 
-    {
-        #ifdef ENABLE_DISPLAY
-        dp_display_text((DPCHAR*)"\r\nMaintaining last known IO states...");
-        #endif
-        goto_jtag_state(JTAG_CAPTURE_DR,0u);
-        goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
-    }
-    #else
     dp_get_bytes(G4M_BsrPattern_ID,0u,1u);
     if (return_bytes)
     {
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nLoading BSR...");
         #endif
-        dp_get_and_DRSCAN_in(G4M_BsrPattern_ID, global_uint1, 0u);
+        dp_get_and_DRSCAN_in(G4M_BsrPattern_ID, bsr_bits, 0u);
         goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
     }
-    #endif
     
+    
+    /* Capturing the last known state of the IOs is only valid if the core
+    was programmed.  Otherwise, load the BSR with what is in the data file. */
+    if (core_is_enabled == 1)
+    {
+        for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+        {
+            if (dp_get_bytes(G4M_BsrPatternMask_ID,index,1u) != 0)
+            {
+                capture_last_known_io_state = 1;
+                break;
+            }
+        }
+        if (capture_last_known_io_state)
+        {
+            if (bsr_bits > MAX_BSR_BIT_SIZE)
+            {
+                #ifdef ENABLE_DISPLAY
+                dp_display_text((DPCHAR*)"\r\nError: number of bsr bits > max buffer size.\r\nSkipping maintain last known state of the IOs...");
+                #endif
+            }
+            else 
+            {
+                DRSCAN_out(bsr_bits, (DPUCHAR*)DPNULL, bsr_sample_buffer);
+                
+                for (index = 0; index < (DPUINT)(bsr_bits + 7u ) / 8u; index++)
+                {
+                    bsr_buffer[index] = dp_get_bytes(G4M_BsrPattern_ID,index,1u);
+                    mask = dp_get_bytes(G4M_BsrPatternMask_ID,index,1u);
+                    
+                    if (mask != 0u)
+                    {
+                        c_mask = ~mask;
+                        bsr_buffer[index] = (bsr_buffer[index] & c_mask) | (bsr_sample_buffer[index] & mask);
+                    }
+                }
+                
+                opcode = ISC_SAMPLE;
+                IRSCAN_in();
+                DRSCAN_in(0, bsr_bits, bsr_buffer);
+                goto_jtag_state(JTAG_RUN_TEST_IDLE,0u);
+            }
+        }
+    }
     
     return;
 }
@@ -967,16 +1120,27 @@ void dp_G4M_perform_isc_enable(void)
     
     opcode = ISC_ENABLE;
     dp_G4M_device_poll(32u, 31u);
-    
-    
-    if ( (error_code != DPE_SUCCESS) || 
+    if ((poll_buf[0] == global_buf1[0]) && (poll_buf[1] == global_buf1[1]) && (poll_buf[2] == global_buf1[2]))
+    {
+        error_code = DPE_INIT_FAILURE;
+        unique_exit_code = 32815;
+        #ifdef ENABLE_DISPLAY
+        dp_display_text((DPCHAR*)"\r\nJTAG interface is protected by UPK1.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+        dp_display_value(unique_exit_code, HEX);
+        #endif
+    }
+    else if ( (error_code != DPE_SUCCESS) || 
     ((poll_buf[0] & 0x1u) == 1u) || 
     ( (poll_buf[0] == 0) && (poll_buf[1] == 0) && (poll_buf[2] == 0) && (poll_buf[3] == 0)))
     {
+        error_code = DPE_INIT_FAILURE;
+        unique_exit_code = 32771;
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nFailed to enter programming mode.");
+        dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+        dp_display_value(unique_exit_code, HEX);
         #endif
-        error_code = DPE_INIT_FAILURE;
     }
     
     #ifdef ENABLE_DISPLAY
@@ -993,48 +1157,55 @@ void dp_G4M_perform_isc_enable(void)
     dp_display_text((DPCHAR*)"\r\nEDCERR: ");
     dp_display_value(global_uchar1,HEX);
     
-    /* Display TEMPRANGE */
-    global_uchar1 = (poll_buf[0] >> 2) & 0x7u;
-    dp_display_text((DPCHAR*)"\r\nTEMPRANGE:");
-    dp_display_value(global_uchar1,HEX);
-    if (global_uchar1 == 0u)
+    if (error_code == DPE_SUCCESS)
     {
-        dp_display_text((DPCHAR*)"\r\nTEMPRANGE: COLD");
+        /* Display TEMPRANGE */
+        global_uchar1 = (poll_buf[0] >> 2) & 0x7u;
+        dp_display_text((DPCHAR*)"\r\nTEMPRANGE:");
+        dp_display_value(global_uchar1,HEX);
+        if (global_uchar1 == 0u)
+        {
+            dp_display_text((DPCHAR*)"\r\nTEMPRANGE: COLD");
+        }
+        else if (global_uchar1 == 1u)
+        {
+            dp_display_text((DPCHAR*)"\r\nTEMPRANGE: ROOM");
+        }
+        if (global_uchar1 == 2u)
+        {
+            dp_display_text((DPCHAR*)"\r\nTEMPRANGE: HOT");
+        }
+        
+        
+        /* Display VPPRANGE */
+        /*
+        global_uchar1 = (poll_buf[0] >> 5) & 0x7u;
+        dp_display_text((DPCHAR*)"\r\nVPPRANGE:");
+        dp_display_value(global_uchar1,HEX);
+        if (global_uchar1 == 0u)
+        {
+            dp_display_text((DPCHAR*)"\r\nVPPRANGE: LOW");
+        }
+        else if (global_uchar1 == 1u)
+        {
+            dp_display_text((DPCHAR*)"\r\nVPPRANGE: NOMINAL");
+        }
+        if (global_uchar1 == 2u)
+        {
+            dp_display_text((DPCHAR*)"\r\nVPPRANGE: HIGH");
+        }
+        */
+        /* Display TEMP */
+        /*
+        dp_display_text((DPCHAR*)"\r\nTEMP:");
+        dp_display_value(poll_buf[1],HEX);
+        */
+        /* Display VPP */
+        /*
+        dp_display_text((DPCHAR*)"\r\nVPP:");
+        dp_display_value(poll_buf[2],HEX);
+        */
     }
-    else if (global_uchar1 == 1u)
-    {
-        dp_display_text((DPCHAR*)"\r\nTEMPRANGE: ROOM");
-    }
-    if (global_uchar1 == 2u)
-    {
-        dp_display_text((DPCHAR*)"\r\nTEMPRANGE: HOT");
-    }
-    
-    
-    /* Display VPPRANGE */
-    global_uchar1 = (poll_buf[0] >> 5) & 0x7u;
-    dp_display_text((DPCHAR*)"\r\nVPPRANGE:");
-    dp_display_value(global_uchar1,HEX);
-    if (global_uchar1 == 0u)
-    {
-        dp_display_text((DPCHAR*)"\r\nVPPRANGE: LOW");
-    }
-    else if (global_uchar1 == 1u)
-    {
-        dp_display_text((DPCHAR*)"\r\nVPPRANGE: NOMINAL");
-    }
-    if (global_uchar1 == 2u)
-    {
-        dp_display_text((DPCHAR*)"\r\nVPPRANGE: HIGH");
-    }
-    
-    /* Display TEMP */
-    dp_display_text((DPCHAR*)"\r\nTEMP:");
-    dp_display_value(poll_buf[1],HEX);
-    
-    /* Display VPP */
-    dp_display_text((DPCHAR*)"\r\nVPP:");
-    dp_display_value(poll_buf[2],HEX);
     #endif
     
     
@@ -1045,6 +1216,7 @@ void dp_G4M_perform_isc_enable(void)
 void dp_G4M_initialize(void)
 {
     dp_G4M_poll_device_ready();
+    
     if (error_code == DPE_SUCCESS)
     {
         dp_set_pgm_mode();
@@ -1063,18 +1235,53 @@ void dp_G4M_initialize(void)
         dp_G4M_load_bsr();
         if (error_code == DPE_SUCCESS)
         {
-            dp_G4M_perform_isc_enable();
+            dp_G4M_check_core_status();
+            if (core_is_enabled == 0)
+            {
+                dp_G4M_set_dpc();
+            }
+            if (error_code == DPE_SUCCESS)
+            {
+                dp_G4M_perform_isc_enable();
+            }
+            if (core_is_enabled == 0)
+            {
+                dp_G4M_reset_dpc();
+            }
         }
     }
-    
     return;
 }
 
+void dp_G4M_set_dpc(void)
+{
+    DPUCHAR dpc_buf[8] = {0x40u, 0x40u, 0x02u, 0x04u, 0x00u, 0x00u, 0x00u, 0x00u};
+    opcode = G4M_DPC;
+    IRSCAN_in();
+    DRSCAN_in(0u, G4M_DPC_REGISTER_BIT_LENGTH, dpc_buf);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G4M_STANDARD_CYCLES);
+    dp_delay(G4M_STANDARD_DELAY);
+    
+    opcode = G4M_DPC;
+    dp_G4M_device_poll(64u, 63u);
+}
+
+void dp_G4M_reset_dpc(void)
+{
+    DPUCHAR dpc_buf[8] = {0x40u, 0x48u, 0x02u, 0x04u, 0x00u, 0x00u, 0x00u, 0x00u};
+    opcode = G4M_DPC;
+    IRSCAN_in();
+    DRSCAN_in(0u, G4M_DPC_REGISTER_BIT_LENGTH, dpc_buf);
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G4M_STANDARD_CYCLES);
+    dp_delay(G4M_STANDARD_DELAY);
+    
+    opcode = G4M_DPC;
+    dp_G4M_device_poll(64u, 63u);
+}
 
 /* Function is used to exit programming mode */
 void dp_G4M_exit(void)
 {
-    
     if (pgmmode_flag == TRUE)
     {
         opcode = ISC_DISABLE;
@@ -1085,22 +1292,28 @@ void dp_G4M_exit(void)
         opcode = ISC_DISABLE;
         dp_G4M_device_poll(32u, 31u);
         #ifdef ENABLE_DISPLAY
-        if (error_code != DPE_SUCCESS)
+        if ((error_code != DPE_SUCCESS) && (unique_exit_code == DPE_SUCCESS))
         {
             dp_display_text((DPCHAR*)"\r\nFailed to disable programming mode.");
         }
         #endif
     }
+    
     #ifdef ENABLE_DISPLAY
     dp_G4M_read_fsn();
     #endif
+    
+    opcode = G4M_EXTEST2;
+    IRSCAN_in();
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G4M_STANDARD_CYCLES);
+    dp_delay(G4M_EXTEST2_DELAY);
+    
     goto_jtag_state(JTAG_TEST_LOGIC_RESET,0u);
     return;
 }
 
 void dp_set_mode(void)
 {
-    
     opcode = G4M_FRAME_INIT;
     IRSCAN_in();
     DRSCAN_in(0u, G4M_STATUS_REGISTER_BIT_LENGTH, &pgmmode);
@@ -1307,6 +1520,7 @@ global_uint1 is iCurNumOfComponents
 */
 void dp_G4M_prepare_bitstream(void)
 {
+    prep_bitstream = 1u;
     pgmmode = 0x2u;
     dp_set_mode();
     
@@ -1334,6 +1548,7 @@ void dp_G4M_prepare_bitstream(void)
         global_uint1 = 2u;
         dp_G4M_process_predata(G4M_datastream_ID);
     }
+    prep_bitstream = 0u;
     return;
 }
 
@@ -1426,10 +1641,25 @@ void dp_G4M_process_data(DPUCHAR BlockID)
         global_ulong1 >>= ((global_uint2 - 1U)* 22u) % 8u;
         global_ulong1 &= 0x3FFFFFu;
         
+        if (BlockID == G4M_datastream_ID)
+        {
+            component_type = (DPUCHAR) dp_get_bytes(G4M_datastream_ID,COMPONENT_TYPE_IN_HEADER_BYTE+DataIndex/8,1);
+            
+            if (component_type == G4M_ENVM)
+            {
+                /* Component type is no longer needed since we know it is eNVM.  We need to know which module */
+                envm_module_id = (DPUCHAR) dp_get_bytes(G4M_datastream_ID,COMPONENT_TYPE_IN_HEADER_BYTE+ENVM_MODULE_ID_IN_HEADER_BYTE+DataIndex/8,1);
+            }            
+            certificate_support = (DPUCHAR) dp_get_bytes(G4M_datastream_ID,CERTIFICATE_SUPPORT_BYTE_OFFSET+DataIndex/8,1) & 0x2u;
+        }
+        
         #ifdef ENABLE_DISPLAY
         dp_display_text((DPCHAR*)"\r\nProcessing component ");
         dp_display_value(global_uint2,DEC);
+        dp_display_text((DPCHAR*)"\r\nNumber of blocks = ");
+        dp_display_value(global_ulong1,DEC);
         dp_display_text((DPCHAR*)". Please wait...");
+        
         #endif
         
         opcode = G4M_FRAME_DATA;
@@ -1466,58 +1696,178 @@ void dp_G4M_process_data(DPUCHAR BlockID)
             }
             if (error_code != DPE_SUCCESS)
             {
+                error_code = DPE_PROCESS_DATA_ERROR;
+                if (Action_code == DP_PROGRAM_ACTION_CODE)
+                    unique_exit_code = 32824;
+                else if (Action_code == DP_VERIFY_ACTION_CODE)
+                    unique_exit_code = 32822;
+                else if (Action_code == DP_ERASE_ACTION_CODE)
+                    unique_exit_code = 32820;
+                else if (Action_code ==DP_ENC_DATA_AUTHENTICATION_ACTION_CODE)
+                    unique_exit_code = 32818;
+                
                 #ifdef ENABLE_DISPLAY
                 dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
                 dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
                 dp_display_value(global_uint2, DEC);
                 dp_display_text((DPCHAR*)"\r\nblockNo: ");
                 dp_display_value(global_ulong2, DEC);
+                dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+                dp_display_value(unique_exit_code, HEX);
                 #endif
-                error_code = DPE_PROCESS_DATA_ERROR;
                 global_uint2 = global_uint1;
                 break;
             }
             else if ((poll_buf[0] & 0x18u) != 0u)
             {
+                #ifdef ENABLE_DISPLAY
+                if (component_type == G4M_BITS)
+                    dp_display_text((DPCHAR*)"\r\ncomponent: BITS");
+                else if (component_type == G4M_FPGA)
+                    dp_display_text((DPCHAR*)"\r\ncomponent: FPGA");
+                else if (component_type == G4M_KEYS)
+                    dp_display_text((DPCHAR*)"\r\ncomponent: Security");
+                else if (component_type == G4M_ENVM)
+                    dp_display_text((DPCHAR*)"\r\ncomponent: eNVM");
+                else if (component_type == G4M_EOB)
+                    dp_display_text((DPCHAR*)"\r\ncomponent: EOB");
+                
+                dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
+                dp_display_value(global_uint2, DEC);
+                dp_display_text((DPCHAR*)"\r\nblockNo: ");
+                dp_display_value(global_ulong2, DEC);
+                dp_display_text((DPCHAR*)"\r\nFRAME_DATA_RESULT: ");
+                dp_display_array(poll_buf,2u,HEX);
+                #endif              
+                
                 dp_G4M_get_data_status();
+                
                 if (error_code != DPE_SUCCESS)
                 {
                     #ifdef ENABLE_DISPLAY
-                    dp_display_text((DPCHAR*)"\r\nInstruction timed out.");
-                    dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
-                    dp_display_value(global_uint2, DEC);
-                    dp_display_text((DPCHAR*)"\r\nblockNo: ");
-                    dp_display_value(global_ulong2, DEC);
+                    dp_display_text((DPCHAR*)"\r\nData status instruction timed out.");
                     #endif
-                    error_code = DPE_PROCESS_DATA_ERROR;
-                    global_uint2 = global_uint1;
-                    break;
                 }
                 else if ((poll_buf[0] & 0x4u) != 0u)
                 {
                     #ifdef ENABLE_DISPLAY
-                    dp_display_text((DPCHAR*)"\r\ncomponentNo: ");
-                    dp_display_value(global_uint2, DEC);
-                    dp_display_text((DPCHAR*)"\r\nblockNo: ");
-                    dp_display_value(global_ulong2, DEC);
                     dp_display_text((DPCHAR*)"\r\nDATA_STATUS_RESULT: ");
                     dp_display_array(poll_buf,4u,HEX);
                     dp_display_text((DPCHAR*)"\r\nERRORCODE: ");
                     dp_display_value((poll_buf[0]>>3u) & 0x1fu,HEX);
                     dp_display_text((DPCHAR*)"\r\nAUTHERRCODE: ");
                     dp_display_value(poll_buf[1],HEX);
+                    
+                    if ((poll_buf[1] == 1u) || (poll_buf[1] == 2u) || (poll_buf[1] == 4u) || (poll_buf[1] == 8u))
+                    {
+                        unique_exit_code = 32799;
+                        dp_display_text((DPCHAR*)"\r\nBitstream or data is corrupted or noisy.");
+                    }
+                    else if(poll_buf[1] == 3u)
+                    {
+                        unique_exit_code = 32801;
+                        dp_display_text((DPCHAR*)"\r\nInvalid/Corrupted encryption key." );
+                    }
+                    else if(poll_buf[1] == 5u)
+                    {
+                        unique_exit_code = 32803;
+                        dp_display_text((DPCHAR*)"\r\nBack level not satisfied." );
+                    }                    
+                    else if(poll_buf[1] == 7u)
+                    {
+                        unique_exit_code = 32805;
+                        dp_display_text((DPCHAR*)"\r\nDSN binding mismatch." );
+                    }
+                    else if(poll_buf[1] == 9u)
+                    {
+                        unique_exit_code = 32807;
+                        dp_display_text((DPCHAR*)"\r\nBitstream and device mismatch." );
+                    }
+                    else if(poll_buf[1] == 10u)
+                    {
+                        unique_exit_code = 32809;
+                        dp_display_text((DPCHAR*)"\r\nIncorrect DEVICEID." );
+                    }
+                    else if(poll_buf[1] == 11u)
+                    {
+                        unique_exit_code = 32811;
+                        dp_display_text((DPCHAR*)"\r\nProgramming file is out of date, please regenerate.");
+                    }
+                    else if(poll_buf[1] == 12u)
+                    {
+                        unique_exit_code = 32813;
+                        dp_display_text((DPCHAR*)"\r\nProgramming file does not support verification.");
+                    }
+                    else if(poll_buf[1] == 13u)
+                    {
+                        unique_exit_code = 32816;
+                        dp_display_text((DPCHAR*)"\r\nInvalid or inaccessible Device Certificate.");
+                    }
+                    if ( (poll_buf[0] & 0xf8u) != 0u)
+                    {
+                        if ((poll_buf[0] & 0xf8u) == 0x28u)// 5
+                        {
+                            unique_exit_code = 32776;
+                            dp_display_text((DPCHAR*)"\r\nFailed to verify eNVM." );
+                        }
+                        else if ((poll_buf[0] & 0xf8u) == 0x20u)// 4
+                        {
+                            unique_exit_code = 32773;
+                            dp_display_text((DPCHAR*)"\r\nFailed to program eNVM." );
+                        }
+                        else if ((poll_buf[0] & 0xf8u) == 0x10u)// 2
+                        {
+                            unique_exit_code = 32797;
+                            dp_display_text((DPCHAR*)"\r\nDevice security prevented operation." );
+                        } 
+                        else if ( ( (poll_buf[0] & 0xf8u) == 0x8u) && prep_bitstream == 0u )// 1
+                        {
+                            if (poll_buf[2] == 248)
+                            {
+                                dp_display_text((DPCHAR*)"\r\nFailed to verify Fabric Configuration." );                          
+                            }
+                            else if ( (poll_buf[2] == 249) || (poll_buf[2] == 250) || (poll_buf[2] == 251))
+                            {
+                                dp_display_text((DPCHAR*)"\r\nFailed to verify Security." );
+                            }
+                            else if ( (poll_buf[2] != 248) && (poll_buf[2] != 249) && (poll_buf[2] != 250) && (poll_buf[2] != 251))
+                            {
+                                dp_display_text((DPCHAR*)"\r\nFailed to verify FPGA Array." );
+                            }
+                            unique_exit_code = 32775;
+                        } 
+                    }
+                    dp_display_text((DPCHAR*)"\r\nERROR_CODE: ");
+                    dp_display_value(unique_exit_code, HEX);
                     #endif
-                    error_code = DPE_PROCESS_DATA_ERROR;
-                    global_uint2 = global_uint1;
-                    break;
                 }
+                error_code = DPE_PROCESS_DATA_ERROR;
+                global_uint2 = global_uint1;
+                break;
             }
-            
-            
             DataIndex += G4M_FRAME_BIT_LENGTH;
         }
     }
-    
+    #ifdef ENABLE_DISPLAY
+    if (Action_code == DP_PROGRAM_ACTION_CODE)
+    {
+        if ((BlockID == G4M_datastream_ID) && (certificate_support))
+        {
+            if (component_type == G4M_FPGA)
+                dp_display_text((DPCHAR*)"\r\nFabric component bitstream digest: ");
+            else if (component_type == G4M_KEYS)
+                dp_display_text((DPCHAR*)"\r\nSecurity component bitstream digest: ");
+            else if (component_type == G4M_ENVM)
+            {
+                if (envm_module_id == 0)
+                    dp_display_text((DPCHAR*)"\r\neNVM_0 component bitstream digest:"); 
+                else
+                dp_display_text((DPCHAR*)"\r\neNVM_1 component bitstream digest:"); 
+            }
+            dp_G4M_report_certificate();
+        }
+    }
+    #endif
     return;
 }
 
@@ -1581,15 +1931,19 @@ void dp_G4M_query_security(void)
             }
         }
         
-        #ifdef ENABLE_DISPLAY
-        if (security_queried == TRUE)
-        {
-            dp_display_text((DPCHAR*)"\r\n--- Security locks and configuration settings ---\r\n");	
-            dp_display_array(shared_buf,42u,HEX);
-        }
-        #endif
     }
     return;
+}
+
+void dp_G4M_dump_security_info(void)
+{
+    #ifdef ENABLE_DISPLAY
+    if (security_queried == TRUE)
+    {
+        dp_display_text((DPCHAR*)"\r\n--- Security locks and configuration settings ---\r\n");	
+        dp_display_array(shared_buf,42u,HEX);
+    }
+    #endif
 }
 
 void dp_G4M_unlock_dpk(void)
@@ -1615,10 +1969,13 @@ void dp_G4M_unlock_dpk(void)
         dp_G4M_device_poll(8u, 7u);
         if ((error_code != DPE_SUCCESS) || ((poll_buf[0] & 0x3u) != 0x1u) )
         {
+            error_code = DPE_MATCH_ERROR;
+            unique_exit_code = 32786;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)"\r\nFailed to unlock debug pass key.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_MATCH_ERROR;
         }
         else
         {
@@ -1653,10 +2010,13 @@ void dp_G4M_unlock_upk1(void)
         dp_G4M_device_poll(8u, 7u);
         if ((error_code != DPE_SUCCESS) || ((poll_buf[0] & 0x3u) != 0x1u) )
         {
+            error_code = DPE_MATCH_ERROR;
+            unique_exit_code = 32784;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)"\r\nFailed to unlock user pass key 1.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_MATCH_ERROR;
         }
         else
         {
@@ -1691,10 +2051,13 @@ void dp_G4M_unlock_upk2(void)
         dp_G4M_device_poll(8u, 7u);
         if ((error_code != DPE_SUCCESS) || ((poll_buf[0] & 0x3u) != 0x1u) )
         {
+            error_code = DPE_MATCH_ERROR;
+            unique_exit_code = 32785;
             #ifdef ENABLE_DISPLAY
             dp_display_text((DPCHAR*)"\r\nFailed to unlock user pass key 2.");
+            dp_display_text((DPCHAR*)"\r\nERROR_CODE: 0x");
+            dp_display_value(unique_exit_code, HEX);
             #endif
-            error_code = DPE_MATCH_ERROR;
         }
         else
         {
@@ -1816,6 +2179,109 @@ void dp_G4M_load_upk2(void)
     
     return;
 }
+
+#ifdef ENABLE_DISPLAY
+void dp_G4M_read_certificate(void)
+{
+    opcode = G4M_READ_DEVICE_CERT;
+    IRSCAN_in();
+    goto_jtag_state(JTAG_RUN_TEST_IDLE,G4M_STANDARD_CYCLES);
+    dp_delay(G4M_STANDARD_DELAY);
+    dp_G4M_device_poll(8u, 7u);
+    if (error_code != DPE_SUCCESS)
+    {
+        dp_display_text((DPCHAR*)"\r\nFailed to read certificate. \r\nPoll buffer: ");
+        dp_display_array(poll_buf,G4M_STATUS_REGISTER_BIT_LENGTH,HEX);
+        error_code = DPE_POLL_ERROR;
+    }
+    else
+    {
+        if ((poll_buf[0] & 0x1u) == 0x1u)
+        {
+            dp_read_shared_buffer(48u);
+            if (error_code == DPE_SUCCESS)
+            {
+                if ((shared_buf[559] & 0x1u) == 0x1u)// Bit 4472
+                {
+                    dp_display_text((DPCHAR*)"\r\nFamily: SmartFusion2");
+                    dp_display_text((DPCHAR*)"\r\nCortex-M3 Enabled (M3_ALLOWED = 1)");
+                    
+                }
+                else
+                {
+                    dp_display_text((DPCHAR*)"\r\nFamily: Igloo2");
+                    dp_display_text((DPCHAR*)"\r\nCortex-M3 Disabled (M3_ALLOWED = 0)");
+                }
+                dp_display_text((DPCHAR*)"\r\nProduct: ");
+                for (global_uchar1 = 195u; global_uchar1 < 228u; global_uchar1++)
+                {
+                    dp_display_value(shared_buf[global_uchar1],CHR);
+                }
+                /* Check bits 4312 - 4327 */
+                if ((shared_buf[526] & 0xf0 != 0xf0u) &&
+                (shared_buf[527] & 0xff != 0xffu) &&
+                (shared_buf[528] & 0x0f != 0x0fu)
+                )
+                {
+                    dp_display_text((DPCHAR*)"\r\nGrade: ");  
+                    dp_display_array(&shared_buf[527], 16u, HEX);
+                }
+                if (Action_code == DP_READ_DEVICE_CERTIFICATE_ACTION_CODE)
+                {
+                    dp_display_text((DPCHAR*)"\r\nDEVICE_CERTIFICATE(LSB->MSB) ");
+                    dp_display_array_reverse(shared_buf, 768u, HEX);
+                }
+            }
+        }
+    }
+    return;
+}
+
+void dp_G4M_display_bitstream_digest(void)
+{
+    
+    DataIndex = 0u;
+    global_uint1 = (DPUINT)dp_get_bytes(Header_ID,G4M_DATASIZE_OFFSET,G4M_DATASIZE_BYTE_LENGTH);
+    for (global_uint2 = 1u; global_uint2 <= global_uint1; global_uint2++)
+    {
+        /* get the number of blocks */
+        /* Global ulong1 is used to hold the number of blocks within the components */
+        global_ulong1 = dp_get_bytes(G4M_NUMBER_OF_BLOCKS_ID,(DPULONG)(((global_uint2 - 1u) * 22u) / 8u),4u);
+        global_ulong1 >>= ((global_uint2 - 1U)* 22u) % 8u;
+        global_ulong1 &= 0x3FFFFFu;
+        
+        component_type = (DPUCHAR) dp_get_bytes(G4M_datastream_ID,COMPONENT_TYPE_IN_HEADER_BYTE+DataIndex/8,1);
+        if (component_type == G4M_BITS)
+        {
+            DPUCHAR * data_address = (DPUCHAR*)DPNULL;
+            data_address = dp_get_data(G4M_datastream_ID, G4M_BSDIGEST_BYTE_OFFSET * 8 + DataIndex);
+            dp_display_text((DPCHAR*)"\r\nBITSTREAM_DIGEST = ");
+            dp_display_array(data_address, G4M_BSDIGEST_BYTE_SIZE, HEX);
+        }
+        DataIndex += G4M_FRAME_BIT_LENGTH * global_ulong1;
+    }
+    
+    
+    return;
+}
+#endif
+
+
+void dp_G4M_report_certificate(void)
+{
+    int iBlocks;
+    iBlocks = certificate_size / 128u;
+    if (iBlocks > 0u)
+    {
+        iBlocks++;
+        dp_read_shared_buffer(iBlocks);
+    }
+    #ifdef ENABLE_DISPLAY    
+    dp_display_array(&shared_buf[18], 32u, HEX);
+    #endif
+}
+
+
 
 
 #endif /* ENABLE_G4_SUPPORT */

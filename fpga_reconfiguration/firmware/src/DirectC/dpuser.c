@@ -69,7 +69,7 @@ communications whether written or oral.                                     */
 /* ************************************************************************ */
 /*                                                                          */
 /*  JTAG_DirectC    Copyright (C) Microsemi Corporation                     */
-/*  Version 4.1     Release date January 29, 2018                           */
+/*  Version 2021.2  Release date December 2021                              */
 /*                                                                          */
 /* ************************************************************************ */
 /*                                                                          */
@@ -80,9 +80,9 @@ communications whether written or oral.                                     */
 /*                                                                          */
 /****************************************************************************/
 
-#include "DirectC/dpuser.h"
-#include "DirectC/dpalg.h"
-#include "DirectC/dputil.h"
+#include "dpuser.h"
+#include "dpalg.h"
+#include "dputil.h"
 /* 
 * User attention:
 * Include files needed to support hardware JTAG interface operations.
@@ -150,7 +150,7 @@ DPUCHAR jtag_inp(void)
 * Return value: None
 * 
 */
-static inline void jtag_outp(DPUCHAR outdata)
+inline void jtag_outp(DPUCHAR outdata)
 {
     /* User defined */
     PIOA_REGS->PIO_MSKR = 0x1D;
@@ -300,9 +300,6 @@ void dp_exit_avionics_mode(void)
     return;
 }
 
-/* User defined */
-/* End of User defined */
-
 #ifdef ENABLE_DISPLAY
 void __attribute__((tcm)) dp_report_progress(DPUCHAR value)
 {
@@ -397,7 +394,7 @@ void dp_display_value(DPULONG value,DPUINT descriptive)
     }
     else 
     {
-        length = int_to_dec_int( value, value_text, 8);
+        length = int_to_dec_int( value, value_text);
     }
     
     /* Send the data */

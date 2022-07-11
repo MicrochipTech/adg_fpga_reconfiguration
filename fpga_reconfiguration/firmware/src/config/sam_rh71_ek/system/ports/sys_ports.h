@@ -71,7 +71,7 @@
 
   Description:
     Define datatypes needed by Harmony Core SYS_PORT layer.
-    
+
 *******************************************************************************/
 
 // DOM-IGNORE-BEGIN
@@ -141,7 +141,7 @@ typedef enum
     SYS_PORT_D = (uint32_t)&(PIO_REGS->PIO_GROUP[3]),
     SYS_PORT_E = (uint32_t)&(PIO_REGS->PIO_GROUP[4]),
     SYS_PORT_F = (uint32_t)&(PIO_REGS->PIO_GROUP[5]),
-    SYS_PORT_G = (uint32_t)&(PIO_REGS->PIO_GROUP[6])
+    SYS_PORT_G = (uint32_t)&(PIO_REGS->PIO_GROUP[6]),
 } SYS_PORT;
 
 

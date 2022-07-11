@@ -1,7 +1,7 @@
 /*
  * Header file for ATSAMRH71F20C
  *
- * Copyright (c) 2021 Microchip Technology Inc. and its subsidiaries.
+ * Copyright (c) 2022 Microchip Technology Inc. and its subsidiaries.
  *
  * Subject to your compliance with these terms, you may use Microchip software and any derivatives
  * exclusively with Microchip products. It is your responsibility to comply with third party license
@@ -20,15 +20,16 @@
  *
  */
 
-/* File generated from device description version 2021-05-04T16:48:28Z */
+/* File generated from device description version 2022-01-06T10:24:17Z */
 #ifndef _SAMRH71F20C_H_
 #define _SAMRH71F20C_H_
 
 /* Header version uses Semantic Versioning 2.0.0 (https://semver.org/) */
-#define HEADER_FORMAT_VERSION "2.0.0"
+#define HEADER_FORMAT_VERSION "2.1.0"
 
 #define HEADER_FORMAT_VERSION_MAJOR (2)
-#define HEADER_FORMAT_VERSION_MINOR (0)
+#define HEADER_FORMAT_VERSION_MINOR (1)
+#define HEADER_FORMAT_VERSION_PATCH (0)
 
 /* SAMRH71F20C definitions
   This file defines all structures and symbols for SAMRH71F20C:
@@ -47,21 +48,21 @@
 #endif /* !(defined(__ASSEMBLER__) || defined(__IAR_SYSTEMS_ASM__)) */
 
 #if !defined(SKIP_INTEGER_LITERALS)
-#  if defined(_U_) || defined(_L_) || defined(_UL_)
-#    error "Integer Literals macros already defined elsewhere"
+#  if defined(_UINT8_) || defined(_UINT16_) || defined(_UINT32_)
+#    error "Integer constant value macros already defined elsewhere"
 #  endif
 
 #if !(defined(__ASSEMBLER__) || defined(__IAR_SYSTEMS_ASM__))
-/* Macros that deal with adding suffixes to integer literal constants for C/C++ */
-#  define _U_(x) (x ## U)    /* C code: Unsigned integer literal constant value */
-#  define _L_(x) (x ## L)    /* C code: Long integer literal constant value */
-#  define _UL_(x) (x ## UL)  /* C code: Unsigned Long integer literal constant value */
+/* Macros that deal with sizes of integer constants for C/C++ */
+#  define _UINT8_(x)   ((uint8_t)(x))    /* C code: 8-bits unsigned integer constant value */
+#  define _UINT16_(x)  ((uint16_t)(x))   /* C code: 16-bits unsigned integer constant value */
+#  define _UINT32_(x)  ((uint32_t)(x))   /* C code: 32-bits unsigned integer constant value */
 
 #else /* Assembler */
 
-#  define _U_(x) x    /* Assembler: Unsigned integer literal constant value */
-#  define _L_(x) x    /* Assembler: Long integer literal constant value */
-#  define _UL_(x) x   /* Assembler: Unsigned Long integer literal constant value */
+#  define _UINT8_(x) x    /* Assembler: 8-bits unsigned integer constant value */
+#  define _UINT16_(x) x   /* Assembler: 16-bits unsigned integer constant value */
+#  define _UINT32_(x) x   /* Assembler: 32-bits unsigned integer constant value */
 #endif /* !(defined(__ASSEMBLER__) || defined(__IAR_SYSTEMS_ASM__)) */
 #endif /* SKIP_INTEGER_LITERALS */
 
@@ -575,51 +576,51 @@ void GMAC_Q5_Handler               ( void );
 /* ************************************************************************** */
 /*   BASE ADDRESS DEFINITIONS FOR SAMRH71F20C                                 */
 /* ************************************************************************** */
-#define CHIPID_BASE_ADDRESS              _UL_(0x40100000)                              /* CHIPID Base Address */
-#define FLEXCOM0_BASE_ADDRESS            _UL_(0x40010000)                              /* FLEXCOM0 Base Address */
-#define FLEXCOM1_BASE_ADDRESS            _UL_(0x40014000)                              /* FLEXCOM1 Base Address */
-#define FLEXCOM2_BASE_ADDRESS            _UL_(0x40018000)                              /* FLEXCOM2 Base Address */
-#define FLEXCOM3_BASE_ADDRESS            _UL_(0x4001c000)                              /* FLEXCOM3 Base Address */
-#define FLEXCOM4_BASE_ADDRESS            _UL_(0x40020000)                              /* FLEXCOM4 Base Address */
-#define FLEXCOM5_BASE_ADDRESS            _UL_(0x40024000)                              /* FLEXCOM5 Base Address */
-#define FLEXCOM6_BASE_ADDRESS            _UL_(0x40028000)                              /* FLEXCOM6 Base Address */
-#define FLEXCOM7_BASE_ADDRESS            _UL_(0x4002c000)                              /* FLEXCOM7 Base Address */
-#define FLEXCOM8_BASE_ADDRESS            _UL_(0x40030000)                              /* FLEXCOM8 Base Address */
-#define FLEXCOM9_BASE_ADDRESS            _UL_(0x40034000)                              /* FLEXCOM9 Base Address */
-#define FLEXRAMECC_BASE_ADDRESS          _UL_(0x40100600)                              /* FLEXRAMECC Base Address */
-#define GMAC_BASE_ADDRESS                _UL_(0x4009c000)                              /* GMAC Base Address */
-#define HEFC_BASE_ADDRESS                _UL_(0x40004000)                              /* HEFC Base Address */
-#define HEMC_BASE_ADDRESS                _UL_(0x40080000)                              /* HEMC Base Address */
-#define HSDRAMC_BASE_ADDRESS             _UL_(0x40082000)                              /* HSDRAMC Base Address */
-#define HSMC_BASE_ADDRESS                _UL_(0x40081000)                              /* HSMC Base Address */
-#define ICM_BASE_ADDRESS                 _UL_(0x4008c000)                              /* ICM Base Address */
-#define IP1553_BASE_ADDRESS              _UL_(0x4003c000)                              /* IP1553 Base Address */
-#define MATRIX0_BASE_ADDRESS             _UL_(0x40000000)                              /* MATRIX0 Base Address */
-#define MCAN0_BASE_ADDRESS               _UL_(0x40058000)                              /* MCAN0 Base Address */
-#define MCAN1_BASE_ADDRESS               _UL_(0x4005c000)                              /* MCAN1 Base Address */
-#define NMIC_BASE_ADDRESS                _UL_(0x400a8000)                              /* NMIC Base Address */
-#define PIO_BASE_ADDRESS                 _UL_(0x40008000)                              /* PIO Base Address */
-#define PMC_BASE_ADDRESS                 _UL_(0x4000c000)                              /* PMC Base Address */
-#define PWM0_BASE_ADDRESS                _UL_(0x40068000)                              /* PWM0 Base Address */
-#define PWM1_BASE_ADDRESS                _UL_(0x4006c000)                              /* PWM1 Base Address */
-#define QSPI_BASE_ADDRESS                _UL_(0x40038000)                              /* QSPI Base Address */
-#define RSTC_BASE_ADDRESS                _UL_(0x40100200)                              /* RSTC Base Address */
-#define RSWDT_BASE_ADDRESS               _UL_(0x40100300)                              /* RSWDT Base Address */
-#define RTC_BASE_ADDRESS                 _UL_(0x40100260)                              /* RTC Base Address */
-#define RTT_BASE_ADDRESS                 _UL_(0x40100230)                              /* RTT Base Address */
-#define SFR_BASE_ADDRESS                 _UL_(0x400a0000)                              /* SFR Base Address */
-#define SHA_BASE_ADDRESS                 _UL_(0x40094000)                              /* SHA Base Address */
-#define SPW_BASE_ADDRESS                 _UL_(0x40040000)                              /* SPW Base Address */
-#define SUPC_BASE_ADDRESS                _UL_(0x40100210)                              /* SUPC Base Address */
-#define TC0_BASE_ADDRESS                 _UL_(0x40070000)                              /* TC0 Base Address */
-#define TC1_BASE_ADDRESS                 _UL_(0x40074000)                              /* TC1 Base Address */
-#define TC2_BASE_ADDRESS                 _UL_(0x40078000)                              /* TC2 Base Address */
-#define TC3_BASE_ADDRESS                 _UL_(0x4007c000)                              /* TC3 Base Address */
-#define TCMECC_BASE_ADDRESS              _UL_(0x40100400)                              /* TCMECC Base Address */
-#define TRNG_BASE_ADDRESS                _UL_(0x40090000)                              /* TRNG Base Address */
-#define WDT_BASE_ADDRESS                 _UL_(0x40100250)                              /* WDT Base Address */
-#define XDMAC_BASE_ADDRESS               _UL_(0x40098000)                              /* XDMAC Base Address */
-#define GPNVMBITS_BASE_ADDRESS           _UL_(0x00000000)                              /* FUSES Base Address */
+#define CHIPID_BASE_ADDRESS              _UINT32_(0x40100000)                          /* CHIPID Base Address */
+#define FLEXCOM0_BASE_ADDRESS            _UINT32_(0x40010000)                          /* FLEXCOM0 Base Address */
+#define FLEXCOM1_BASE_ADDRESS            _UINT32_(0x40014000)                          /* FLEXCOM1 Base Address */
+#define FLEXCOM2_BASE_ADDRESS            _UINT32_(0x40018000)                          /* FLEXCOM2 Base Address */
+#define FLEXCOM3_BASE_ADDRESS            _UINT32_(0x4001c000)                          /* FLEXCOM3 Base Address */
+#define FLEXCOM4_BASE_ADDRESS            _UINT32_(0x40020000)                          /* FLEXCOM4 Base Address */
+#define FLEXCOM5_BASE_ADDRESS            _UINT32_(0x40024000)                          /* FLEXCOM5 Base Address */
+#define FLEXCOM6_BASE_ADDRESS            _UINT32_(0x40028000)                          /* FLEXCOM6 Base Address */
+#define FLEXCOM7_BASE_ADDRESS            _UINT32_(0x4002c000)                          /* FLEXCOM7 Base Address */
+#define FLEXCOM8_BASE_ADDRESS            _UINT32_(0x40030000)                          /* FLEXCOM8 Base Address */
+#define FLEXCOM9_BASE_ADDRESS            _UINT32_(0x40034000)                          /* FLEXCOM9 Base Address */
+#define FLEXRAMECC_BASE_ADDRESS          _UINT32_(0x40100600)                          /* FLEXRAMECC Base Address */
+#define GMAC_BASE_ADDRESS                _UINT32_(0x4009c000)                          /* GMAC Base Address */
+#define HEFC_BASE_ADDRESS                _UINT32_(0x40004000)                          /* HEFC Base Address */
+#define HEMC_BASE_ADDRESS                _UINT32_(0x40080000)                          /* HEMC Base Address */
+#define HSDRAMC_BASE_ADDRESS             _UINT32_(0x40082000)                          /* HSDRAMC Base Address */
+#define HSMC_BASE_ADDRESS                _UINT32_(0x40081000)                          /* HSMC Base Address */
+#define ICM_BASE_ADDRESS                 _UINT32_(0x4008c000)                          /* ICM Base Address */
+#define IP1553_BASE_ADDRESS              _UINT32_(0x4003c000)                          /* IP1553 Base Address */
+#define MATRIX0_BASE_ADDRESS             _UINT32_(0x40000000)                          /* MATRIX0 Base Address */
+#define MCAN0_BASE_ADDRESS               _UINT32_(0x40058000)                          /* MCAN0 Base Address */
+#define MCAN1_BASE_ADDRESS               _UINT32_(0x4005c000)                          /* MCAN1 Base Address */
+#define NMIC_BASE_ADDRESS                _UINT32_(0x400a8000)                          /* NMIC Base Address */
+#define PIO_BASE_ADDRESS                 _UINT32_(0x40008000)                          /* PIO Base Address */
+#define PMC_BASE_ADDRESS                 _UINT32_(0x4000c000)                          /* PMC Base Address */
+#define PWM0_BASE_ADDRESS                _UINT32_(0x40068000)                          /* PWM0 Base Address */
+#define PWM1_BASE_ADDRESS                _UINT32_(0x4006c000)                          /* PWM1 Base Address */
+#define QSPI_BASE_ADDRESS                _UINT32_(0x40038000)                          /* QSPI Base Address */
+#define RSTC_BASE_ADDRESS                _UINT32_(0x40100200)                          /* RSTC Base Address */
+#define RSWDT_BASE_ADDRESS               _UINT32_(0x40100300)                          /* RSWDT Base Address */
+#define RTC_BASE_ADDRESS                 _UINT32_(0x40100260)                          /* RTC Base Address */
+#define RTT_BASE_ADDRESS                 _UINT32_(0x40100230)                          /* RTT Base Address */
+#define SFR_BASE_ADDRESS                 _UINT32_(0x400a0000)                          /* SFR Base Address */
+#define SHA_BASE_ADDRESS                 _UINT32_(0x40094000)                          /* SHA Base Address */
+#define SPW_BASE_ADDRESS                 _UINT32_(0x40040000)                          /* SPW Base Address */
+#define SUPC_BASE_ADDRESS                _UINT32_(0x40100210)                          /* SUPC Base Address */
+#define TC0_BASE_ADDRESS                 _UINT32_(0x40070000)                          /* TC0 Base Address */
+#define TC1_BASE_ADDRESS                 _UINT32_(0x40074000)                          /* TC1 Base Address */
+#define TC2_BASE_ADDRESS                 _UINT32_(0x40078000)                          /* TC2 Base Address */
+#define TC3_BASE_ADDRESS                 _UINT32_(0x4007c000)                          /* TC3 Base Address */
+#define TCMECC_BASE_ADDRESS              _UINT32_(0x40100400)                          /* TCMECC Base Address */
+#define TRNG_BASE_ADDRESS                _UINT32_(0x40090000)                          /* TRNG Base Address */
+#define WDT_BASE_ADDRESS                 _UINT32_(0x40100250)                          /* WDT Base Address */
+#define XDMAC_BASE_ADDRESS               _UINT32_(0x40098000)                          /* XDMAC Base Address */
+#define GPNVMBITS_BASE_ADDRESS           _UINT32_(0x00000000)                          /* FUSES Base Address */
 
 /* ************************************************************************** */
 /*   PIO DEFINITIONS FOR SAMRH71F20C                                          */
@@ -629,36 +630,35 @@ void GMAC_Q5_Handler               ( void );
 /* ************************************************************************** */
 /*   MEMORY MAPPING DEFINITIONS FOR SAMRH71F20C                               */
 /* ************************************************************************** */
+#define PERIPHERALS_SIZE               _UINT32_(0x20000000)    /* 524288kB Memory segment type: io */
+#define SYSTEM_SIZE                    _UINT32_(0x10000000)    /* 262144kB Memory segment type: io */
+#define QSPIMEM_SIZE                   _UINT32_(0x08000000)    /* 131072kB Memory segment type: other */
+#define AXIMX_SIZE                     _UINT32_(0x00100000)    /* 1024kB Memory segment type: other */
+#define ITCM_SIZE                      _UINT32_(0x00020000)    /*  128kB Memory segment type: other */
+#define IFLASH_SIZE                    _UINT32_(0x00020000)    /*  128kB Memory segment type: flash */
+#define IFLASH_PAGE_SIZE               _UINT32_(       256)
+#define IFLASH_NB_OF_PAGES             _UINT32_(       512)
 
-#define PERIPHERALS_SIZE               _UL_(0x20000000)    /* 524288kB Memory segment type: io */
-#define SYSTEM_SIZE                    _UL_(0x10000000)    /* 262144kB Memory segment type: io */
-#define QSPIMEM_SIZE                   _UL_(0x08000000)    /* 131072kB Memory segment type: other */
-#define AXIMX_SIZE                     _UL_(0x00100000)    /* 1024kB Memory segment type: other */
-#define ITCM_SIZE                      _UL_(0x00020000)    /*  128kB Memory segment type: other */
-#define IFLASH_SIZE                    _UL_(0x00020000)    /*  128kB Memory segment type: flash */
-#define IFLASH_PAGE_SIZE               _UL_(       256)
-#define IFLASH_NB_OF_PAGES             _UL_(       512)
+#define DTCM_SIZE                      _UINT32_(0x00040000)    /*  256kB Memory segment type: other */
+#define FlexRAM_SIZE                   _UINT32_(0x000c0000)    /*  768kB Memory segment type: ram */
+#define EBI_CSHEMC_SIZE                _UINT32_(0x80000000)    /* 2097152kB Memory segment type: other */
 
-#define DTCM_SIZE                      _UL_(0x00040000)    /*  256kB Memory segment type: other */
-#define FlexRAM_SIZE                   _UL_(0x000c0000)    /*  768kB Memory segment type: ram */
-#define EBI_CSHEMC_SIZE                _UL_(0x80000000)    /* 2097152kB Memory segment type: other */
-
-#define PERIPHERALS_ADDR               _UL_(0x40000000)    /* PERIPHERALS base address (type: io)*/
-#define SYSTEM_ADDR                    _UL_(0xe0000000)    /* SYSTEM base address (type: io)*/
-#define QSPIMEM_ADDR                   _UL_(0x18000000)    /* QSPIMEM base address (type: other)*/
-#define AXIMX_ADDR                     _UL_(0x22000000)    /* AXIMX base address (type: other)*/
-#define ITCM_ADDR                      _UL_(0x00000000)    /* ITCM base address (type: other)*/
-#define IFLASH_ADDR                    _UL_(0x10000000)    /* IFLASH base address (type: flash)*/
-#define DTCM_ADDR                      _UL_(0x20000000)    /* DTCM base address (type: other)*/
-#define FLEXRAM_ADDR                   _UL_(0x21000000)    /* FLEXRAM base address (type: ram)*/
-#define EBI_CSHEMC_ADDR                _UL_(0x60000000)    /* EBI_CSHEMC base address (type: other)*/
+#define PERIPHERALS_ADDR               _UINT32_(0x40000000)    /* PERIPHERALS base address (type: io)*/
+#define SYSTEM_ADDR                    _UINT32_(0xe0000000)    /* SYSTEM base address (type: io)*/
+#define QSPIMEM_ADDR                   _UINT32_(0x18000000)    /* QSPIMEM base address (type: other)*/
+#define AXIMX_ADDR                     _UINT32_(0x22000000)    /* AXIMX base address (type: other)*/
+#define ITCM_ADDR                      _UINT32_(0x00000000)    /* ITCM base address (type: other)*/
+#define IFLASH_ADDR                    _UINT32_(0x10000000)    /* IFLASH base address (type: flash)*/
+#define DTCM_ADDR                      _UINT32_(0x20000000)    /* DTCM base address (type: other)*/
+#define FLEXRAM_ADDR                   _UINT32_(0x21000000)    /* FLEXRAM base address (type: ram)*/
+#define EBI_CSHEMC_ADDR                _UINT32_(0x60000000)    /* EBI_CSHEMC base address (type: other)*/
 
 /* ************************************************************************** */
 /*   DEVICE SIGNATURES FOR SAMRH71F20C                                        */
 /* ************************************************************************** */
-#define CHIP_JTAGID                    _UL_(0X05D0503F)
-#define CHIP_CIDR                      _UL_(0XA22F0700)
-#define CHIP_EXID                      _UL_(0X00000001)
+#define CHIP_JTAGID                    _UINT32_(0X05D0503F)
+#define CHIP_CIDR                      _UINT32_(0XA22F0700)
+#define CHIP_EXID                      _UINT32_(0X00000001)
 
 /* ************************************************************************** */
 /*   ELECTRICAL DEFINITIONS FOR SAMRH71F20C                                   */

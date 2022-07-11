@@ -2,6 +2,27 @@
 
 # Microchip FPGA reconfiguration Example Release Notes
 
+## FPGA reconfiguration Example v1.1.0
+### New Features
+- Updated DirectC version to v2021.2.
+- Used REPROGRAM_INFLIGHT commands for programming.
+- Updated and Regenerated example with CSP version v3.13.0.
+
+### Known Issues
+
+### Development Tools
+
+* [MPLAB® X IDE v6.60](https://www.microchip.com/mplab/mplab-x-ide)
+* [MPLAB® XC32 C/C++ Compiler v4.10](https://www.microchip.com/mplab/compilers)
+* MPLAB® X IDE plug-ins:
+    * MPLAB® Code Configurator 5.1.9 or higher.
+
+### Dependent Components
+
+* [CSP v3.13.0](https://github.com/Microchip-MPLAB-Harmony/csp/releases/tag/v3.13.0)
+* [CORE v3.11.0](https://github.com/Microchip-MPLAB-Harmony/core/releases/tag/v3.11.0)
+* [DEV_PACK v3.13.0](https://github.com/Microchip-MPLAB-Harmony/dev_packs/releases/tag/v3.13.0)
+
 
 ## FPGA reconfiguration Example v1.0.2
 ### New Features
